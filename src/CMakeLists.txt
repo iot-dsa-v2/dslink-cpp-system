@@ -1,35 +1,49 @@
-find_package(Boost 1.6 REQUIRED COMPONENTS system thread date_time)
-include_directories(${Boost_INCLUDE_DIRS})
-set(LIBS ${TEST_LIBS} ${Boost_LIBRARIES})
+cmake_minimum_required(VERSION 3.6.2)
+project(dslink-cpp-system)
 
+## OpenSSL v1.0.2l
+if (MACOSX)
+	set(OPENSSL_ROOT_DIR "/usr/local/Cellar/openssl/1.0.2l")
+elseif (UNIX)
+	set(OPENSSL_ROOT_DIR "/usr/local/ssl")
+endif ()
 find_package(OpenSSL REQUIRED)
-include_directories(${OPENSSL_INCLUDE_DIR})
-set(LIBS ${LIBS} ${OPENSSL_LIBRARIES})
+include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
-# sdk-dslink-cpp setup
-set(DSA_SDK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../deps/sdk-dslink-cpp")
-if (UNIX)
-	set(DSA_SDK_NAME "${CMAKE_STATIC_LIBRARY_PREFIX}dsa_sdk${CMAKE_STATIC_LIBRARY_SUFFIX}")
-	set(DSA_SDK_LIBRARIES "${DSA_SDK_ROOT}/lib/${DSA_SDK_NAME}")
-endif (UNIX)
+set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+set(DSA_SDK_SOURCE ${PROJECT_SOURCE_DIR}/../deps/sdk-dslink-cpp/src)
+set(DSA_SDK_INCLUDE ${PROJECT_SOURCE_DIR}/../deps/sdk-dslink-cpp/include)
+set(DSA_SDK_DEPS ${PROJECT_SOURCE_DIR}/../deps/sdk-dslink-cpp/deps)
 
-if (WIN32)
-	set(DSA_SDK_LIBRARIES $<TARGET_FILE:dsa_sdk>)
-endif (WIN32)
+include_directories(${PROJECT_INCLUDE_DIR})
+include_directories(${DSA_SDK_DEPS}/msgpack/include)
+include_directories(${DSA_SDK_DEPS}/jansson-build/include)
 
-list(APPEND DSA_SDK_INCLUDE_DIRS
-            "${DSA_SDK_ROOT}/include"
-            "${DSA_SDK_ROOT}/src/sdk")
+## Boost Library v1.66
+find_package(Threads)
+set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+find_package(Boost 1.66 REQUIRED COMPONENTS system thread date_time program_options filesystem)
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-foreach (dir  ${DSA_SDK_INCLUDE_DIRS})
-  include_directories(${dir})
-endforeach ()
+find_package(Threads REQUIRED)
 
-# Requester
-set(LIBS ${DSA_SDK_LIBRARIES} ${LIBS})
-set(TARGET_NAME "system_main")
-set(SOURCES "system_main.cc")
+include_directories(${Boost_INCLUDE_DIR})
 
-add_executable(${TARGET_NAME} ${SOURCES})
-target_link_libraries(${TARGET_NAME} ${LIBS})
+set(SOURCES system_main.cc)
+
+include_directories("${CMAKE_SOURCE_DIR}/src")
+include_directories("./include")
+include_directories("${DSA_SDK_SOURCE}/sdk")
+include_directories("${DSA_SDK_INCLUDE}")
+
+add_executable(system_dslink ${SOURCES})
+add_library(system_dslink_lib ${SOURCES})
+
+
+target_link_libraries(system_dslink dsa_sdk)
+target_link_libraries(system_dslink Threads::Threads)
+target_link_libraries(system_dslink ${Boost_LIBRARIES})
+target_link_libraries(system_dslink crypto)
+
+add_dependencies(system_dslink broker)
 

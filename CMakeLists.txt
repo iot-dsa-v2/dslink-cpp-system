@@ -1,17 +1,24 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.6.2)
 
-if (UNIX)
-        # Download sdk-dslink-cpp at configure time
-        execute_process(COMMAND "./install.sh"
-                RESULT_VARIABLE result
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/deps/sdk-dslink-cpp)
-        if (result)
-            message(FATAL_ERROR "Build step for sdk-dslink-cpp failed: ${result}")
-        endif ()
-endif (UNIX)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set(MACOSX TRUE)
+endif ()
 
-if (WIN32)
-        add_subdirectory("./deps/sdk-dslink-cpp")
-endif (WIN32)
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.1)
+        set(CMAKE_CXX_STANDARD 14)
+else ()
+        set(CMAKE_CXX_STANDARD 11)
+endif ()
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDSA_DEBUG")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+
+if (CMAKE_COMPILER_IS_GNUCC AND NOT CYGWIN)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstack-protector-all")
+
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type")
+endif()
+
+add_subdirectory("${CMAKE_SOURCE_DIR}/deps/sdk-dslink-cpp")
 add_subdirectory("./src")
