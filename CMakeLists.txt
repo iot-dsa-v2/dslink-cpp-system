@@ -20,5 +20,9 @@ if (CMAKE_COMPILER_IS_GNUCC AND NOT CYGWIN)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type")
 endif()
 
+set(SOURCES system_main.cc)
+
+#add_executable(systemdslink ${SOURCES})
+
 add_subdirectory("${CMAKE_SOURCE_DIR}/deps/sdk-dslink-cpp")
 add_subdirectory("./src")
