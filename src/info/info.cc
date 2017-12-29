@@ -192,6 +192,20 @@ info::system::memory_t info::system::get_memory_info() {
   return ret;
 }
 
+info::system::diskspace_t info::system::get_diskspace_info() {
+
+  info::system::diskspace_t ret;
+  boost::filesystem::space_info _space_info = boost::filesystem::space(".");
+
+  ret._disk_usage = std::to_string(_space_info.capacity/1024/1024) + "MB";
+  ret._diskspace_total = std::to_string(_space_info.capacity/1024/1024) + "MB";
+  ret._diskspace_available = std::to_string(_space_info.available/1024/1024) + "MB";
+  ret._diskspace_free = std::to_string(_space_info.free/1024/1024) + "MB";
+  ret._diskspace_used = std::to_string((_space_info.capacity - _space_info.available)/1024/1024) + "MB";
+
+  return ret;
+}
+
 std::vector<info::cpu::CPUData> info::cpu::ReadStatsCPU() {
 
   std::ifstream fileStat("/proc/stat");

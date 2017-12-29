@@ -172,6 +172,14 @@ struct memory_t {
   std::string _physical_total;
 };
 
+struct diskspace_t {
+  std::string _disk_usage;
+  std::string _diskspace_used;
+  std::string _diskspace_available;
+  std::string _diskspace_free;
+  std::string _diskspace_total;
+};
+
 enum class kernel_t {
   windows_nt,
   linux_,
@@ -219,6 +227,9 @@ std::size_t other_HID_amount();
 
 /// Get RAM statistics.
 memory_t get_memory_info();
+
+/// Get Disk statistics.
+diskspace_t get_diskspace_info();
 
 /// Get kernel information.
 kernel_info_t get_kernel_info();
