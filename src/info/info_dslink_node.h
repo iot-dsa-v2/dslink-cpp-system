@@ -1,13 +1,13 @@
 #ifndef PROJECT_INFO_DSLINK_NODE_H
 #define PROJECT_INFO_DSLINK_NODE_H
 
-#include "dslink.h"
 #include "dsa/message.h"
-#include "dsa/stream.h"
 #include "dsa/network.h"
-#include "module/logger.h"
 #include "dsa/responder.h"
+#include "dsa/stream.h"
+#include "dslink.h"
 #include "info.h"
+#include "module/logger.h"
 
 #include <iostream>
 
@@ -17,230 +17,94 @@ using namespace dsa;
 
 namespace dslink_info {
 
-class InfoDsLinkNodeCPUUsage : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeCPUUsage(LinkStrandRef strand);
+class InfoDsLinkNodeBase : public NodeModel {
+  bool _subscribe_state;
+
+public:
+  explicit InfoDsLinkNodeBase(LinkStrandRef &&strand);
 
   void on_subscribe(const SubscribeOptions &options,
                     bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::cpu::get_cpu_usage()));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
+    _subscribe_state = true;
   }
+
+  void on_unsubscribe() override { _subscribe_state = false; }
+  bool get_subs_state() { return _subscribe_state; }
+
+  virtual void update_value() {}
 };
 
-class InfoDsLinkNodeFreeMemory : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeFreeMemory(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::system::get_memory_info()._physical_free));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeCPUUsage : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeCPUUsage(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeUsedMemory : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeUsedMemory(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::system::get_memory_info()._physical_used));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeFreeMemory : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeFreeMemory(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeTotalMemory : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeTotalMemory(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::system::get_memory_info()._physical_total));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeUsedMemory : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeUsedMemory(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeDiskUsage : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeDiskUsage(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::system::get_diskspace_info()._disk_usage));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeTotalMemory : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeTotalMemory(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeFreeDiskSpace : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeFreeDiskSpace(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::system::get_diskspace_info()._diskspace_free));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeDiskUsage : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeDiskUsage(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeUsedDiskSpace : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeUsedDiskSpace(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::system::get_diskspace_info()._diskspace_used));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeFreeDiskSpace : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeFreeDiskSpace(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeTotalDiskSpace: public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeTotalDiskSpace(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::system::get_diskspace_info()._diskspace_total));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeUsedDiskSpace : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeUsedDiskSpace(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeHardwareModel : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeHardwareModel(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::cpu::get_product_name()));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeTotalDiskSpace : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeTotalDiskSpace(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeModelName : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeModelName(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::cpu::get_model_name()));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeHardwareModel : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeHardwareModel(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
-
-class InfoDsLinkNodeCPUFreq : public NodeModel {
- public:
-  std::unique_ptr<SubscribeOptions> first_subscribe_options;
-  std::unique_ptr<SubscribeOptions> second_subscribe_options;
-  explicit InfoDsLinkNodeCPUFreq(LinkStrandRef strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override {
-    first_subscribe_options.reset(new SubscribeOptions(options));
-    if (first_request) {
-      _strand->add_timer(1000, [ this, keep_ref = get_ref() ](bool canceled) {
-        set_value(Var(info::cpu::get_frequency()));
-        return true;
-      });
-    } else {
-      set_value(Var("world"));
-    }
-  }
+class InfoDsLinkNodeModelName : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeModelName(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
+};
+class InfoDsLinkNodeCPUFreq : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeCPUFreq(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
 };
 
 class InfoDsLinkNode : public NodeModel {
- public:
+public:
+  std::map<string, ref_<InfoDsLinkNodeBase>> nodes;
   explicit InfoDsLinkNode(LinkStrandRef strand);
 };
-
 }
-#endif //PROJECT_INFO_DSLINK_NODE_H
+#endif // PROJECT_INFO_DSLINK_NODE_H
