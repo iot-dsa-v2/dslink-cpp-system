@@ -9,6 +9,8 @@
 #include "info.h"
 #include "module/logger.h"
 
+#include "process/process_handler.h"
+
 #include <iostream>
 
 using namespace std;
@@ -21,10 +23,15 @@ class InfoDsLinkNodeBase : public NodeModel {
   bool _subscribe_state;
 
 public:
+  typedef std::function<void(void)> SubsCallback;
+  SubsCallback _subs_callback;
+  void set_subs_callback(SubsCallback &&cb);
   explicit InfoDsLinkNodeBase(LinkStrandRef &&strand);
 
   void on_subscribe(const SubscribeOptions &options,
                     bool first_request) override {
+    if (_subs_callback)
+      _subs_callback();
     _subscribe_state = true;
   }
 
@@ -100,11 +107,52 @@ public:
       : InfoDsLinkNodeBase(std::move(strand)){};
   void update_value() override;
 };
+class InfoDsLinkNodeSystemTime : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeSystemTime(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
+};
+class InfoDsLinkNodeOperatingSystem : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeOperatingSystem(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
+};
+class InfoDsLinkNodePlatform : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodePlatform(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
+};
+class InfoDsLinkNodeHostname : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeHostname(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
+};
+class InfoDsLinkNodeArchitecture : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeArchitecture(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
+};
+class InfoDsLinkNodeProcessorCount : public InfoDsLinkNodeBase {
+public:
+  explicit InfoDsLinkNodeProcessorCount(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)){};
+  void update_value() override;
+};
 
 class InfoDsLinkNode : public NodeModel {
+  ref_<StrandTimer> _timer;
+  ref_<StrandTimer> _command_timer;
+
 public:
   std::map<string, ref_<InfoDsLinkNodeBase>> nodes;
-  explicit InfoDsLinkNode(LinkStrandRef strand);
+  explicit InfoDsLinkNode(LinkStrandRef &&strand,
+                          ref_<info::ProcessHandler> &&process,
+                          std::shared_ptr<App> app);
 };
 }
 #endif // PROJECT_INFO_DSLINK_NODE_H

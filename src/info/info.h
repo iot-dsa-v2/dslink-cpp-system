@@ -12,13 +12,13 @@
 
 namespace info {
 namespace cpu {
-enum class architecture_t {
-  x64,
-  arm,
-  itanium,
-  x86,
-  unknown,
-};
+//enum class architecture_t {
+//  x64,
+//  arm,
+//  itanium,
+//  x86,
+//  unknown,
+//};
 
 enum class endianness_t {
   little,
@@ -85,7 +85,7 @@ struct quantities_t {
   /// Hyperthreads.
   std::uint32_t logical;
   /// Physical "cores".
-  std::uint32_t physical;
+  std::string physical;
   /// Physical CPU units/packages/sockets.
   std::uint32_t packages;
 };
@@ -138,7 +138,7 @@ cache_t cache(unsigned int level);
 std::string get_product_name();
 
 /// Returns the architecture of the current CPU.
-architecture_t get_architecture();
+std::string get_architecture();
 
 /// Returns the current frequency of the current CPU in Hz.
 std::string get_frequency();
@@ -188,7 +188,7 @@ enum class kernel_t {
 };
 
 struct kernel_info_t {
-  kernel_t variant;
+  std::string variant;
   std::uint32_t major;
   std::uint32_t minor;
   std::uint32_t patch;
@@ -230,6 +230,12 @@ memory_t get_memory_info();
 
 /// Get Disk statistics.
 diskspace_t get_diskspace_info();
+
+/// Get System Time
+std::string get_system_time();
+
+/// Get Hostname
+std::string get_hostname();
 
 /// Get kernel information.
 kernel_info_t get_kernel_info();

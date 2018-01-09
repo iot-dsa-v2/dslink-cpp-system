@@ -13,23 +13,26 @@
 #include <chrono>
 #include <thread>
 #include <iterator>
+#include <ctime>
 
-info::cpu::architecture_t info::cpu::get_architecture() {
+std::string info::cpu::get_architecture() {
   utsname buf;
 
   if(uname(&buf) == -1)
-    return info::cpu::architecture_t::unknown;
-
-  if(!strcmp(buf.machine, "x86_64"))
-    return info::cpu::architecture_t::x64;
-  else if(strstr(buf.machine, "arm") == buf.machine)
-    return info::cpu::architecture_t::arm;
-  else if(!strcmp(buf.machine, "ia64") || !strcmp(buf.machine, "IA64"))
-    return info::cpu::architecture_t::itanium;
-  else if(!strcmp(buf.machine, "i686"))
-    return info::cpu::architecture_t::x86;
+    return "Unknown";
   else
-    return info::cpu::architecture_t::unknown;
+    return buf.machine;
+
+//  if(!strcmp(buf.machine, "x86_64"))
+//    return "x86_64";
+//  else if(strstr(buf.machine, "arm") == buf.machine)
+//    return "arm";
+//  else if(!strcmp(buf.machine, "ia64") || !strcmp(buf.machine, "IA64"))
+//    return "IA64";
+//  else if(!strcmp(buf.machine, "i686"))
+//    return "i686";
+//  else
+//    return "Unknown";
 }
 
 
@@ -43,8 +46,7 @@ std::string info::cpu::get_frequency() {
     if(line.find("cpu MHz") == 0) {
       const auto colon_id = line.find_first_of(':');
       std::string frequency = line.c_str() + colon_id + 1;
-      //return static_cast<int64_t>(std::strtod(line.c_str() + colon_id + 1, nullptr) * 1'000'000);
-      return (frequency + "MHz");
+      return (frequency + " MHz");
     }
 
   return 0;
@@ -52,7 +54,7 @@ std::string info::cpu::get_frequency() {
 
 info::cpu::quantities_t info::cpu::get_cpu_quantities() {
   info::cpu::quantities_t ret{};
-  ret.logical = sysconf(_SC_NPROCESSORS_ONLN);
+  //ret.logical = sysconf(_SC_NPROCESSORS_ONLN);
 
   std::ifstream cpuinfo("/proc/cpuinfo");
 
@@ -64,7 +66,10 @@ info::cpu::quantities_t info::cpu::get_cpu_quantities() {
     if(line.find("physical id") == 0)
       package_ids.emplace_back(std::strtoul(line.c_str() + line.find_first_of("1234567890"), nullptr, 10));
     else if(line.find("processor") == 0)
-      ++ret.physical;
+      ++ret.logical;
+    else if(line.find("cpu cores") == 0)
+      ret.physical = line.c_str() + line.find_first_of("1234567890");
+
 
   std::sort(package_ids.begin(), package_ids.end());
   package_ids.erase(std::unique(package_ids.begin(), package_ids.end()), package_ids.end());
@@ -148,11 +153,11 @@ info::system::kernel_info_t info::system::get_kernel_info() {
   const unsigned int patch        = std::strtoul(marker + 1, &marker, 10);
   const unsigned int build_number = std::strtoul(marker + 1, nullptr, 10);
 
-  auto kernel = info::system::kernel_t::unknown;
+  std::string kernel = "Unknown";
   if(!std::strcmp(uts.sysname, "Linux"))
-    kernel = info::system::kernel_t::linux_;
+    kernel = "Linux";
   else if(!std::strcmp(uts.sysname, "Darwin"))
-    kernel = info::system::kernel_t::darwin;
+    kernel = "Darwin";
 
   return {kernel, major, minor, patch, build_number};
 }
@@ -184,10 +189,10 @@ info::system::memory_t info::system::get_memory_info() {
 
   }
 
-  ret._physical_total = std::to_string(physical_total/1024/1024) + "mb";
-  ret._physical_available = std::to_string(physical_available/1024/1024) + "mb";
-  ret._physical_free = std::to_string(physical_free/1024/1024) + "mb";
-  ret._physical_used = std::to_string(physical_used/1024/1024) + "mb";
+  ret._physical_total = std::to_string(physical_total/1024/1024) + " mb";
+  ret._physical_available = std::to_string(physical_available/1024/1024) + " mb";
+  ret._physical_free = std::to_string(physical_free/1024/1024) + " mb";
+  ret._physical_used = std::to_string(physical_used/1024/1024) + " mb";
 
   return ret;
 }
@@ -197,13 +202,28 @@ info::system::diskspace_t info::system::get_diskspace_info() {
   info::system::diskspace_t ret;
   boost::filesystem::space_info _space_info = boost::filesystem::space(".");
 
-  ret._disk_usage = std::to_string(_space_info.capacity/1024/1024) + "MB";
-  ret._diskspace_total = std::to_string(_space_info.capacity/1024/1024) + "MB";
-  ret._diskspace_available = std::to_string(_space_info.available/1024/1024) + "MB";
-  ret._diskspace_free = std::to_string(_space_info.free/1024/1024) + "MB";
-  ret._diskspace_used = std::to_string((_space_info.capacity - _space_info.available)/1024/1024) + "MB";
+  ret._disk_usage = std::to_string(_space_info.capacity/1024/1024) + " MB";
+  ret._diskspace_total = std::to_string(_space_info.capacity/1024/1024) + " MB";
+  ret._diskspace_available = std::to_string(_space_info.available/1024/1024) + " MB";
+  ret._diskspace_free = std::to_string(_space_info.free/1024/1024) + " MB";
+  ret._diskspace_used = std::to_string((_space_info.capacity - _space_info.available)/1024/1024) + " MB";
 
   return ret;
+}
+
+std::string info::system::get_system_time() {
+
+  time_t now = time(0);
+
+  return ctime(&now);
+}
+
+std::string info::system::get_hostname() {
+
+  char hostname[1024];
+  gethostname(hostname, 1024);
+
+  return hostname;
 }
 
 std::vector<info::cpu::CPUData> info::cpu::ReadStatsCPU() {

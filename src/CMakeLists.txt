@@ -29,7 +29,7 @@ find_package(Threads REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIR})
 
-set(SOURCES system_main.cc info/info_dslink_node.cc info/info.cc)
+set(SOURCES system_main.cc info/info_dslink_node.cc info/info.cc process/process_handler.cc)
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
 include_directories("./include")

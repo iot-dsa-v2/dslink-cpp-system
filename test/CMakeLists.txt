@@ -64,7 +64,7 @@ set(TARGET_NAME "test-system-dslink")
 
 #add_subdirectory("mock_dslink_processes")
 
-add_executable(${TARGET_NAME} system_test.cc ../src/info/info.cc ../src/info/info_dslink_node.cc)
+add_executable(${TARGET_NAME} system_test.cc "../deps/sdk-dslink-cpp/test/sdk/async_test.cc" ../src/info/info.cc ../src/info/info_dslink_node.cc ../src/process/process_handler.cc)
 target_link_libraries(${TARGET_NAME} ${TEST_LIBS})
 target_link_libraries(${TARGET_NAME} Threads::Threads)
 add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})

@@ -1,19 +1,22 @@
 #include "../src/info/info_dslink_node.h"
 #include "dslink.h"
 #include <iostream>
-#include "gtest/gtest.h"
+
+#include "../deps/sdk-dslink-cpp/test/sdk/async_test.h"
+#include "../deps/sdk-dslink-cpp/test/sdk/test_config.h"
 #include "module/default/console_logger.h"
+#include "gtest/gtest.h"
 
 using namespace dsa;
 using namespace std;
 using namespace dslink_info;
 
-TEST(SystemLinkTest,SSubscribeTest) {
+TEST(SystemLinkTest, SSubscribeTest) {
   shared_ptr<App> app = make_shared<App>();
-
-  const char *argv[] = {"./testResp", "--broker", "ds://127.0.0.1:4120",
-                        "-l", "info", "--thread",
-                        "4", "--server-port", "4121"};
+  auto process = make_ref_<info::ProcessHandler>("/usr/bin/gedit", "", "");
+  const char *argv[] = {"./testResp", "--broker",      "ds://127.0.0.1:4125",
+                        "-l",         "info",          "--thread",
+                        "4",          "--server-port", "4164"};
   int argc = 9;
   auto linkResp = make_ref_<DsLink>(argc, argv, "mydslink", "1.0.0");
 
@@ -21,11 +24,16 @@ TEST(SystemLinkTest,SSubscribeTest) {
   static_cast<ConsoleLogger &>(linkResp->strand->logger()).filter =
       Logger::FATAL_ | Logger::ERROR_ | Logger::WARN__;
 
-  linkResp->init_responder<InfoDsLinkNode>();
+  ref_<InfoDsLinkNode> _info_node = make_ref_<InfoDsLinkNode>(
+      linkResp->strand->get_ref(), process->get_ref(), app);
+
+  linkResp->init_responder(std::move(_info_node));
+
+  // linkResp->init_responder<InfoDsLinkNode>();
   linkResp->connect([&](const shared_ptr_<Connection> connection) {});
 
   // Create link
-  std::string address = std::string("127.0.0.1:") + std::to_string(4121);
+  std::string address = std::string("127.0.0.1:") + std::to_string(4164);
   const char *argv2[] = {"./test", "-b", address.c_str()};
   int argc2 = 3;
   auto link = make_ref_<DsLink>(argc2, argv2, "mydslink", "1.0.0", app);
@@ -39,104 +47,144 @@ TEST(SystemLinkTest,SSubscribeTest) {
   link->connect(
       [&](const shared_ptr_<Connection> connection) { is_connected = true; });
 
-//  ASYNC_EXPECT_TRUE(500, *link->strand, [&]() { return is_connected; });
+  ASYNC_EXPECT_TRUE(2000, *link->strand, [&]() { return is_connected; });
+
   std::vector<string_> list_result;
   // List test
   link->list("", [&](IncomingListCache &cache,
-                     const std::vector<string_> &str) { list_result = str;
-  });
+                     const std::vector<string_> &str) { list_result = str; });
 
   std::vector<std::string> messages;
-  link->subscribe("main/CPU_Usage",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "CPU Usage: " << message->get_value().value.get_string() << "\n";
-                  });
+  link->subscribe(
+      "main/cpu_usage", [&](IncomingSubscribeCache &cache,
+                            ref_<const SubscribeResponseMessage> message) {
+        messages.push_back(message->get_value().value.get_string());
+        cout << "CPU Usage: " << message->get_value().value.get_string()
+             << "\n";
+      });
+  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
 
-  link->subscribe("main/Free_Memory",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "Free Memory: " << message->get_value().value.get_string() << "\n";
-                  });
+  //  link->subscribe("main/free_memory",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "Free Memory: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
+  //
+  //  link->subscribe("main/used_memory",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "Used Memory: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
+  //
+  //  link->subscribe("main/total_memory",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "Total Memory: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
+  //
+  //  link->subscribe("main/free_disk_space",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "Free Disk Space: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
+  //
+  //  link->subscribe("main/used_disk_space",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "Used Disk Space: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
+  //
+  //  link->subscribe("main/total_disk_space",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "Total Disk Space: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
+  //
+  //  link->subscribe("main/disk_usage",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "Disk Usage: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
+  //
+  //  link->subscribe("main/hardware_model",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "CPU Name: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
+  //
+  //  link->subscribe("main/model_name",
+  //                  [&](IncomingSubscribeCache &cache,
+  //                      ref_<const SubscribeResponseMessage> message) {
+  //                    messages.push_back(message->get_value().value.get_string());
+  //                    cout << "Model Name: " <<
+  //                    message->get_value().value.get_string() << "\n";
+  //                  });
 
-  link->subscribe("main/Used_Memory",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "Used Memory: " << message->get_value().value.get_string() << "\n";
-                  });
+  messages.clear();
+  link->subscribe(
+      "main/cpu_frequency", [&](IncomingSubscribeCache &cache,
+                                ref_<const SubscribeResponseMessage> message) {
+        messages.push_back(message->get_value().value.get_string());
+        cout << "CPU Frequency: " << message->get_value().value.get_string()
+             << "\n";
+      });
+  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
 
-  link->subscribe("main/Total_Memory",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "Total Memory: " << message->get_value().value.get_string() << "\n";
-                  });
+  auto first_request = make_ref_<InvokeRequestMessage>();
+  first_request->set_target_path("main/execute_stream_command");
+  first_request->set_value(Var("ping google.com"));
 
-  link->subscribe("main/Free_Disk_Space",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "Free Disk Space: " << message->get_value().value.get_string() << "\n";
-                  });
+  ref_<const InvokeResponseMessage> last_response;
 
-  link->subscribe("main/Used_Disk_Space",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "Used Disk Space: " << message->get_value().value.get_string() << "\n";
-                  });
+  auto invoke_stream = link->invoke(
+      [&](IncomingInvokeStream &stream,
+          ref_<const InvokeResponseMessage> &&msg) {
+        last_response = std::move(msg);
+        if ((last_response != nullptr) &&
+            last_response->get_value().is_string())
+          std::cout << std::endl
+                    << last_response->get_value().to_string() << std::endl;
+      },
+      copy_ref_(first_request));
 
-  link->subscribe("main/Total_Disk_Space",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "Total Disk Space: " << message->get_value().value.get_string() << "\n";
-                  });
+  ASYNC_EXPECT_TRUE(2000, *link->strand, [&]() -> bool {
+    return ((last_response != nullptr) &&
+            last_response->get_value().is_string());
+  });
 
-  link->subscribe("main/Disk_Usage",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "Disk Usage: " << message->get_value().value.get_string() << "\n";
-                  });
-
-  link->subscribe("main/Hardware_Model",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "CPU Name: " << message->get_value().value.get_string() << "\n";
-                  });
-
-  link->subscribe("main/Model_Name",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "Model Name: " << message->get_value().value.get_string() << "\n";
-                  });
-
-  link->subscribe("main/CPU_Frequency",
-                  [&](IncomingSubscribeCache &cache,
-                      ref_<const SubscribeResponseMessage> message) {
-                    messages.push_back(message->get_value().value.get_string());
-                    cout << "CPU Frequency: " << message->get_value().value.get_string() << "\n";
-                  });
-
+  WAIT(5000);
+  invoke_stream->close();
+  WAIT_EXPECT_TRUE(2000, [&]() -> bool { return invoke_stream->is_closed(); });
+  WAIT(4000);
 
   // Cleaning test
-//  destroy_dslink_in_strand(linkResp);
-//  destroy_dslink_in_strand(link);
+  //  destroy_dslink_in_strand(linkResp);
+  //  destroy_dslink_in_strand(link);
 
   linkResp->strand->dispatch([linkResp]() { linkResp->destroy(); });
   link->strand->dispatch([link]() { link->destroy(); });
 
-//  app->close();
-////  WAIT_EXPECT_TRUE(500, [&]() -> bool { return app->is_stopped(); });
-//
-//  if (!app->is_stopped()) {
-//    app->force_stop();
-//  }
+  app->close();
+  WAIT_EXPECT_TRUE(500, [&]() -> bool { return app->is_stopped(); });
+
+  if (!app->is_stopped()) {
+    app->force_stop();
+  }
   app->wait();
 }
