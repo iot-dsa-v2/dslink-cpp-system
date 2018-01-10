@@ -80,8 +80,7 @@ void InfoDsLinkNodeProcessorCount::update_value() {
 };
 
 InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
-                               ref_<info::ProcessHandler> &&process,
-                               std::shared_ptr<App> app)
+                               ref_<info::ProcessHandler> &&process)
     : NodeModel(std::move(strand)) {
 
   nodes["cpu_usage"] = add_list_child(

@@ -23,7 +23,7 @@ bool connect_dslink(int argc, char const *argv[], std::shared_ptr<App> app) {
 
   ref_<InfoDsLinkNode> _info_node =
       make_ref_<InfoDsLinkNode>(std::move(system_main->strand->get_ref()),
-                                std::move(process->get_ref()), app);
+                                std::move(process->get_ref()));
 
   system_main->init_responder(std::move(_info_node));
 

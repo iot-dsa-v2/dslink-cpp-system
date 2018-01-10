@@ -13,23 +13,23 @@ using namespace dslink_info;
 
 TEST(SystemLinkTest, SSubscribeTest) {
   shared_ptr<App> app = make_shared<App>();
-  auto process = make_ref_<info::ProcessHandler>("/usr/bin/gedit", "", "");
+  auto process = make_ref_<info::ProcessHandler>("", "", "");
   const char *argv[] = {"./testResp", "--broker",      "ds://127.0.0.1:4125",
                         "-l",         "info",          "--thread",
                         "4",          "--server-port", "4164"};
   int argc = 9;
-  auto linkResp = make_ref_<DsLink>(argc, argv, "mydslink", "1.0.0");
+  auto linkResp = make_ref_<DsLink>(argc, argv, "mydslink", "1.0.0", app);
 
   // filter log for unit test
   static_cast<ConsoleLogger &>(linkResp->strand->logger()).filter =
       Logger::FATAL_ | Logger::ERROR_ | Logger::WARN__;
 
   ref_<InfoDsLinkNode> _info_node = make_ref_<InfoDsLinkNode>(
-      linkResp->strand->get_ref(), process->get_ref(), app);
+      linkResp->strand->get_ref(), std::move(process));
 
   linkResp->init_responder(std::move(_info_node));
 
-  // linkResp->init_responder<InfoDsLinkNode>();
+  //  linkResp->init_responder<InfoDsLinkNode>();
   linkResp->connect([&](const shared_ptr_<Connection> connection) {});
 
   // Create link
@@ -55,7 +55,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
                      const std::vector<string_> &str) { list_result = str; });
 
   std::vector<std::string> messages;
-  link->subscribe(
+  auto subs_cache = link->subscribe(
       "main/cpu_usage", [&](IncomingSubscribeCache &cache,
                             ref_<const SubscribeResponseMessage> message) {
         messages.push_back(message->get_value().value.get_string());
@@ -63,6 +63,8 @@ TEST(SystemLinkTest, SSubscribeTest) {
              << "\n";
       });
   WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+  WAIT(2000);
+  subs_cache->close();
 
   //  link->subscribe("main/free_memory",
   //                  [&](IncomingSubscribeCache &cache,
@@ -137,7 +139,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
   //                  });
 
   messages.clear();
-  link->subscribe(
+  auto subs_cache2 = link->subscribe(
       "main/cpu_frequency", [&](IncomingSubscribeCache &cache,
                                 ref_<const SubscribeResponseMessage> message) {
         messages.push_back(message->get_value().value.get_string());
@@ -145,10 +147,12 @@ TEST(SystemLinkTest, SSubscribeTest) {
              << "\n";
       });
   WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+  WAIT(2000);
+  subs_cache2->close();
 
   auto first_request = make_ref_<InvokeRequestMessage>();
   first_request->set_target_path("main/execute_stream_command");
-  first_request->set_value(Var("ping google.com"));
+  first_request->set_value(Var{{"cmd", Var("ping google.com")}});
 
   ref_<const InvokeResponseMessage> last_response;
 
@@ -156,16 +160,16 @@ TEST(SystemLinkTest, SSubscribeTest) {
       [&](IncomingInvokeStream &stream,
           ref_<const InvokeResponseMessage> &&msg) {
         last_response = std::move(msg);
-        if ((last_response != nullptr) &&
-            last_response->get_value().is_string())
-          std::cout << std::endl
-                    << last_response->get_value().to_string() << std::endl;
+        if ((last_response != nullptr) && last_response->get_value().is_map())
+          std::cout
+              << std::endl
+              << last_response->get_value().get_map()["output"].to_string()
+              << std::endl;
       },
       copy_ref_(first_request));
 
   ASYNC_EXPECT_TRUE(2000, *link->strand, [&]() -> bool {
-    return ((last_response != nullptr) &&
-            last_response->get_value().is_string());
+    return ((last_response != nullptr) && last_response->get_value().is_map());
   });
 
   WAIT(5000);
@@ -178,7 +182,9 @@ TEST(SystemLinkTest, SSubscribeTest) {
   //  destroy_dslink_in_strand(link);
 
   linkResp->strand->dispatch([linkResp]() { linkResp->destroy(); });
+  WAIT_EXPECT_TRUE(2000, [&]() -> bool { return linkResp->is_destroyed(); });
   link->strand->dispatch([link]() { link->destroy(); });
+  WAIT_EXPECT_TRUE(2000, [&]() -> bool { return link->is_destroyed(); });
 
   app->close();
   WAIT_EXPECT_TRUE(500, [&]() -> bool { return app->is_stopped(); });

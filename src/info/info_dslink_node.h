@@ -151,8 +151,7 @@ class InfoDsLinkNode : public NodeModel {
 public:
   std::map<string, ref_<InfoDsLinkNodeBase>> nodes;
   explicit InfoDsLinkNode(LinkStrandRef &&strand,
-                          ref_<info::ProcessHandler> &&process,
-                          std::shared_ptr<App> app);
+                          ref_<info::ProcessHandler> &&process);
 };
 }
 #endif // PROJECT_INFO_DSLINK_NODE_H
