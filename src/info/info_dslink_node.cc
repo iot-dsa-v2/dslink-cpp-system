@@ -248,7 +248,7 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
       //      _timer->restart(1000);
 
       if (_timer.get() == nullptr ||
-          (_timer.get() != nullptr && !_timer->get_repeat())) {
+          (_timer.get() != nullptr && !_timer->is_running())) {
         if (_timer.get() != nullptr)
           _timer->destroy();
         _timer = _strand->add_timer(

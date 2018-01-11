@@ -16,21 +16,21 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-info::cpu::architecture_t info::cpu::get_architecture() {
+std::string info::cpu::get_architecture() {
   SYSTEM_INFO sysinfo;
   GetSystemInfo(&sysinfo);
 
   switch(sysinfo.wProcessorArchitecture) {
       case PROCESSOR_ARCHITECTURE_AMD64:
-          return iware::cpu::architecture_t::x64;
+          return "x86_64";
       case PROCESSOR_ARCHITECTURE_ARM:
-          return iware::cpu::architecture_t::arm;
+          return "arm";
       case PROCESSOR_ARCHITECTURE_IA64:
-          return iware::cpu::architecture_t::itanium;
+          return "IA64";
       case PROCESSOR_ARCHITECTURE_INTEL:
-          return iware::cpu::architecture_t::x86;
+          return "i686";
       default:
-          return iware::cpu::architecture_t::unknown;
+          return "Unknown";
   }
 }
 
