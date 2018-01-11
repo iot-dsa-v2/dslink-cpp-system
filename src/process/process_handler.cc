@@ -62,10 +62,10 @@ std::string ProcessHandler::getOutput() {
 }
 
 void ProcessHandler::terminate() {
-//  this->process.terminate();
-//  this->process.wait();
+  this->process.terminate();
+  this->process.wait();
 // TODO: make os independent
-  kill(this->process.id(), SIGKILL);
+  //kill(this->process.id(), SIGKILL);
 }
 
 void ProcessHandler::schedule_terminate(int seconds) {

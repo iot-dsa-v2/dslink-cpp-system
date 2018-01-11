@@ -29,7 +29,7 @@ find_package(Threads REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIR})
 
-set(SOURCES system_main.cc info/info_dslink_node.cc info/info.cc process/process_handler.cc)
+set(SOURCES system_main.cc info/info_dslink_node.cc info/info.cc info/info_win.cc process/process_handler.cc)
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
 include_directories("./include")
@@ -37,13 +37,16 @@ include_directories("${DSA_SDK_SOURCE}/sdk")
 include_directories("${DSA_SDK_INCLUDE}")
 
 add_executable(system_dslink ${SOURCES})
-add_library(system_dslink_lib ${SOURCES})
+#add_library(system_dslink_lib ${SOURCES})
 
 
 target_link_libraries(system_dslink dsa_sdk)
 target_link_libraries(system_dslink Threads::Threads)
 target_link_libraries(system_dslink ${Boost_LIBRARIES})
-target_link_libraries(system_dslink crypto)
+target_link_libraries(system_dslink ${OPENSSL_LIBRARIES})
+if (WIN32)
+target_link_libraries(system_dslink Kernel32)
+endif ()
 
 add_dependencies(system_dslink broker)
 
