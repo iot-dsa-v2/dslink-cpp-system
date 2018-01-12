@@ -9,15 +9,16 @@
 #include <cstdlib>
 //#include <unistd.h>
 #include <vector>
-//#include <boost/filesystem.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/asio.hpp>
 #include <sstream>
 #include <chrono>
 #include <thread>
 #include <bitset>
+#include <Pdh.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
 
 
 std::string info::cpu::get_architecture() {
@@ -66,7 +67,7 @@ static std::vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> cpuinfo_buffer() {
 std::string info::cpu::get_frequency() {
   LARGE_INTEGER freq;
   QueryPerformanceFrequency(&freq);
-  return std::to_string(static_cast<int64_t>(freq.QuadPart * 1000));
+  return std::to_string(static_cast<int64_t>(freq.QuadPart / 1000));
 }
 
 info::cpu::quantities_t info::cpu::get_cpu_quantities() {
@@ -93,8 +94,7 @@ info::cpu::quantities_t info::cpu::get_cpu_quantities() {
   return ret;
 }
 std::string info::cpu::get_product_name() {
-
-	return "";
+	return boost::asio::ip::host_name();
 }
 static std::string cpuinfo_value(const char* key) {
 
@@ -124,13 +124,13 @@ static std::string cpuinfo_value(const char* key) {
 info::system::diskspace_t info::system::get_diskspace_info() {
 
 	info::system::diskspace_t ret;
-	//boost::filesystem::space_info _space_info = boost::filesystem::space(".");
+	boost::filesystem::space_info _space_info = boost::filesystem::space(".");
 
-	ret._disk_usage = "";//std::to_string(_space_info.capacity / 1024 / 1024) + " MB";
-	ret._diskspace_total = "";//std::to_string(_space_info.capacity / 1024 / 1024) + " MB";
-	ret._diskspace_available = "";//std::to_string(_space_info.available / 1024 / 1024) + " MB";
-	ret._diskspace_free = "";//std::to_string(_space_info.free / 1024 / 1024) + " MB";
-	ret._diskspace_used = "";//std::to_string((_space_info.capacity - _space_info.available) / 1024 / 1024) + " MB";
+	ret._disk_usage = std::to_string(_space_info.capacity / 1024 / 1024) + " MB";
+	ret._diskspace_total = std::to_string(_space_info.capacity / 1024 / 1024) + " MB";
+	ret._diskspace_available = std::to_string(_space_info.available / 1024 / 1024) + " MB";
+	ret._diskspace_free = std::to_string(_space_info.free / 1024 / 1024) + " MB";
+	ret._diskspace_used = std::to_string((_space_info.capacity - _space_info.available) / 1024 / 1024) + " MB";
 
 	return ret;
 }
@@ -207,27 +207,6 @@ info::system::kernel_info_t info::system::get_kernel_info() {
 }
 
 info::system::memory_t info::system::get_memory_info() {
-  //std::ifstream meminfo("/proc/meminfo");
-
-  //if(!meminfo.is_open() || !meminfo)
-  //  return {};
-
-  //info::system::memory_t ret;
-  //for(std::string line; std::getline(meminfo, line);) {
-  //  const auto colon_id = line.find_first_of(':');
-  //  const auto value    = std::strtoul(line.c_str() + colon_id + 1, nullptr, 10) * 1024;
-
-  //  if(line.find("MemTotal") == 0)
-  //    ret.physical_total = value;
-  //  else if(line.find("MemAvailable") == 0)
-  //    ret.physical_available = value;
-  //  else if(line.find("VmallocTotal") == 0)
-  //    ret.virtual_total = value;
-  //  else if(line.find("VmallocUsed") == 0)
-  //    ret.virtual_available = ret.virtual_total - value;
-//  }
-//
-//return ret;
 
   MEMORYSTATUSEX mem;
   mem.dwLength = sizeof(mem);
@@ -237,9 +216,8 @@ info::system::memory_t info::system::get_memory_info() {
   ret._physical_total = std::to_string(mem.ullTotalPhys / 1024 / 1024) + " mb";
   ret._physical_available = std::to_string(mem.ullAvailPhys / 1024 / 1024) + " mb";
   ret._physical_free = std::to_string(mem.ullAvailPhys / 1024 / 1024) + " mb";
-  ret._physical_used = std::to_string(mem.ullTotalPhys - mem.ullAvailPhys / 1024 / 1024) + " mb";
+  ret._physical_used = std::to_string((mem.ullTotalPhys - mem.ullAvailPhys) / 1024 / 1024) + " mb";
 
-  //return { mem.ullAvailPhys, mem.ullTotalPhys, mem.ullAvailVirtual, mem.ullTotalVirtual };
   return ret;
 
 }
@@ -302,24 +280,25 @@ size_t info::cpu::GetIdleTime(const CPUData & e) {
       e.times[S_IOWAIT];
 }
 
+static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
+{
+	static unsigned long long _previousTotalTicks = 0;
+	static unsigned long long _previousIdleTicks = 0;
+
+	unsigned long long totalTicksSinceLastTime = totalTicks - _previousTotalTicks;
+	unsigned long long idleTicksSinceLastTime = idleTicks - _previousIdleTicks;
+
+	float ret = 1.0f - ((totalTicksSinceLastTime > 0) ? ((float)idleTicksSinceLastTime) / totalTicksSinceLastTime : 0);
+
+	_previousTotalTicks = totalTicks;
+	_previousIdleTicks = idleTicks;
+	return ret;
+}
+
+static unsigned long long FileTimeToInt64(const FILETIME & ft) { return (((unsigned long long)(ft.dwHighDateTime)) << 32) | ((unsigned long long)ft.dwLowDateTime); }
+
 std::string info::cpu::get_cpu_usage() {
-
-  // snapshot 1
-  std::vector<info::cpu::CPUData> entries1 = info::cpu::ReadStatsCPU();
-
-  // 100ms pause
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-  // snapshot 2
-  std::vector<info::cpu::CPUData> entries2 = info::cpu::ReadStatsCPU();
-
-  // get times for total cpu usage (entries1[0],entries2[0])
-  const float ACTIVE_TIME = static_cast<float>(info::cpu::GetActiveTime(entries2[0]) - info::cpu::GetActiveTime(entries1[0]));
-
-  const float IDLE_TIME	= static_cast<float>(info::cpu::GetIdleTime(entries2[0]) - info::cpu::GetIdleTime(entries1[0]));
-
-  const float TOTAL_TIME = ACTIVE_TIME + IDLE_TIME;
-
-  return (std::to_string(100.f * ACTIVE_TIME / TOTAL_TIME) + "%");
+	FILETIME idleTime, kernelTime, userTime;
+	return GetSystemTimes(&idleTime, &kernelTime, &userTime) ? std::to_string((CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime) + FileTimeToInt64(userTime))) * 100 ) + "%" : "NA";
 }
 #endif

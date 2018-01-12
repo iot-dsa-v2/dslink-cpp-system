@@ -16,7 +16,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
   auto process = make_ref_<info::ProcessHandler>("", "", "");
   const char *argv[] = {"./testResp", "--broker",      "ds://127.0.0.1:4125",
                         "-l",         "info",          "--thread",
-                        "4",          "--server-port", "4164"};
+                        "4",          "--server-port", "4161"};
   int argc = 9;
   auto linkResp = make_ref_<DsLink>(argc, argv, "mydslink", "1.0.0", app);
 
@@ -33,7 +33,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
   linkResp->connect([&](const shared_ptr_<Connection> connection) {});
 
   // Create link
-  std::string address = std::string("127.0.0.1:") + std::to_string(4164);
+  std::string address = std::string("127.0.0.1:") + std::to_string(4161);
   const char *argv2[] = {"./test", "-b", address.c_str()};
   int argc2 = 3;
   auto link = make_ref_<DsLink>(argc2, argv2, "mydslink", "1.0.0", app);
@@ -55,100 +55,235 @@ TEST(SystemLinkTest, SSubscribeTest) {
                      const std::vector<string_> &str) { list_result = str; });
 
   std::vector<std::string> messages;
-  auto subs_cache = link->subscribe(
-      "main/cpu_usage", [&](IncomingSubscribeCache &cache,
-                            ref_<const SubscribeResponseMessage> message) {
-        messages.push_back(message->get_value().value.get_string());
-        cout << "CPU Usage: " << message->get_value().value.get_string()
-             << "\n";
-      });
-  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
-  WAIT(2000);
-  subs_cache->close();
+  try {
+	  auto subs_cache = link->subscribe("main/cpu_usage", [&](IncomingSubscribeCache &cache,
+		  ref_<const SubscribeResponseMessage> message) {
+		  messages.push_back(message->get_value().value.to_string());
+		  cout << "CPU Usage: " << message->get_value().value.to_string()
+			  << "\n";
+	  });
+	  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+	  WAIT(2000);
+	  subs_cache->close();
+	  WAIT(1000);
 
-  //  link->subscribe("main/free_memory",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "Free Memory: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
-  //
-  //  link->subscribe("main/used_memory",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "Used Memory: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
-  //
-  //  link->subscribe("main/total_memory",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "Total Memory: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
-  //
-  //  link->subscribe("main/free_disk_space",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "Free Disk Space: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
-  //
-  //  link->subscribe("main/used_disk_space",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "Used Disk Space: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
-  //
-  //  link->subscribe("main/total_disk_space",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "Total Disk Space: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
-  //
-  //  link->subscribe("main/disk_usage",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "Disk Usage: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
-  //
-  //  link->subscribe("main/hardware_model",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "CPU Name: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
-  //
-  //  link->subscribe("main/model_name",
-  //                  [&](IncomingSubscribeCache &cache,
-  //                      ref_<const SubscribeResponseMessage> message) {
-  //                    messages.push_back(message->get_value().value.get_string());
-  //                    cout << "Model Name: " <<
-  //                    message->get_value().value.get_string() << "\n";
-  //                  });
+	  messages.clear();
+  }
+  catch (int e)
+  {
+	  cout << "An exception occurred. Exception Nr. " << e << '\n';
+  }
+  try {
+	  auto subs_cache2 = link->subscribe("main/free_memory",
+		  [&](IncomingSubscribeCache &cache,
+			  ref_<const SubscribeResponseMessage> message) {
+		  messages.push_back(message->get_value().value.to_string());
+		  cout << "Free Memory: " <<
+			  message->get_value().value.to_string() << "\n";
+	  });
+	  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+	  WAIT(2000);
+	  subs_cache2->close();
+	  WAIT(1000);
 
-  messages.clear();
-  auto subs_cache2 = link->subscribe(
-      "main/cpu_frequency", [&](IncomingSubscribeCache &cache,
-                                ref_<const SubscribeResponseMessage> message) {
-        messages.push_back(message->get_value().value.get_string());
-        cout << "CPU Frequency: " << message->get_value().value.get_string()
-             << "\n";
-      });
-  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
-  WAIT(2000);
-  subs_cache2->close();
+	  messages.clear();
+  }
+  catch (int e)
+  {
+	  cout << "An exception occurred. Exception Nr. " << e << '\n';
+  }
+
+  try {
+	  auto subs_cache3 = link->subscribe("main/used_memory",
+		  [&](IncomingSubscribeCache &cache,
+			  ref_<const SubscribeResponseMessage> message) {
+		  messages.push_back(message->get_value().value.to_string());
+		  cout << "Used Memory: " <<
+			  message->get_value().value.to_string() << "\n";
+	  });
+	  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+	  WAIT(2000);
+	  subs_cache3->close();
+	  WAIT(1000);
+
+	  messages.clear();
+  }
+  catch (int e)
+  {
+	  cout << "An exception occurred. Exception Nr. " << e << '\n';
+  }
+  try {
+	  auto subs_cache4 = link->subscribe("main/total_memory",
+		  [&](IncomingSubscribeCache &cache,
+			  ref_<const SubscribeResponseMessage> message) {
+		  messages.push_back(message->get_value().value.to_string());
+		  cout << "Total Memory: " <<
+			  message->get_value().value.to_string() << "\n";
+	  });
+	  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+	  WAIT(2000);
+	  subs_cache4->close();
+	  WAIT(1000);
+
+	  messages.clear();
+  }
+  catch (int e)
+  {
+	  cout << "An exception occurred. Exception Nr. " << e << '\n';
+  }
+  
+  try {
+	  auto subs_cache5 = link->subscribe("main/free_disk_space",
+		  [&](IncomingSubscribeCache &cache,
+			  ref_<const SubscribeResponseMessage> message) {
+		  messages.push_back(message->get_value().value.to_string());
+		  cout << "Free Disk Space: " <<
+			  message->get_value().value.to_string() << "\n";
+	  });
+	  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+	  WAIT(2000);
+	  subs_cache5->close();
+	  WAIT(1000);
+
+	  messages.clear();
+  }
+  catch (int e)
+  {
+	  cout << "An exception occurred. Exception Nr. " << e << '\n';
+  }
+  try {
+	  auto subs_cache6 = link->subscribe("main/used_disk_space",
+		  [&](IncomingSubscribeCache &cache,
+			  ref_<const SubscribeResponseMessage> message) {
+		  messages.push_back(message->get_value().value.to_string());
+		  cout << "Used Disk Space: " <<
+			  message->get_value().value.to_string() << "\n";
+	  });
+	  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+	  WAIT(2000);
+	  subs_cache6->close();
+	  WAIT(1000);
+
+	  messages.clear();
+  }
+  catch (int e)
+  {
+	  cout << "An exception occurred. Exception Nr. " << e << '\n';
+  }
+  try {
+	  auto subs_cache7 = link->subscribe("main/total_disk_space",
+		  [&](IncomingSubscribeCache &cache,
+			  ref_<const SubscribeResponseMessage> message) {
+		  messages.push_back(message->get_value().value.to_string());
+		  cout << "Total Disk Space: " <<
+			  message->get_value().value.to_string() << "\n";
+	  });
+	  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+	  WAIT(2000);
+	  subs_cache7->close();
+	  WAIT(1000);
+
+	  messages.clear();
+  }
+  catch (int e)
+  {
+	  cout << "An exception occurred. Exception Nr. " << e << '\n';
+  }
+  try {
+	  auto subs_cache8 = link->subscribe("main/disk_usage",
+		  [&](IncomingSubscribeCache &cache,
+			  ref_<const SubscribeResponseMessage> message) {
+		  messages.push_back(message->get_value().value.to_string());
+		  cout << "Disk Usage: " <<
+			  message->get_value().value.to_string() << "\n";
+	  });
+	  WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+	  WAIT(2000);
+	  subs_cache8->close();
+	  WAIT(1000);
+
+	  messages.clear();
+  }
+  catch (int e)
+  {
+	  cout << "An exception occurred. Exception Nr. " << e << '\n';
+  }
+	try {
+		auto subs_cache9 = link->subscribe("main/hardware_model",
+			[&](IncomingSubscribeCache &cache,
+				ref_<const SubscribeResponseMessage> message) {
+			messages.push_back(message->get_value().value.to_string());
+			cout << "Device Name: " <<
+				message->get_value().value.to_string() << "\n";
+		});
+		WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+		WAIT(2000);
+		subs_cache9->close();
+		WAIT(1000);
+
+		messages.clear();
+	}
+	catch (int e)
+	{
+		cout << "An exception occurred. Exception Nr. " << e << '\n';
+	}
+	try {
+		auto subs_cache10 = link->subscribe("main/model_name",
+			[&](IncomingSubscribeCache &cache,
+				ref_<const SubscribeResponseMessage> message) {
+			messages.push_back(message->get_value().value.to_string());
+			cout << "Model Name: " <<
+				message->get_value().value.to_string() << "\n";
+		});
+		WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+		WAIT(2000);
+		subs_cache10->close();
+		WAIT(1000);
+
+		messages.clear();
+	}
+	catch (int e)
+	{
+		cout << "An exception occurred. Exception Nr. " << e << '\n';
+	}
+	try{
+		auto subs_cache11 = link->subscribe("main/host_name",
+			[&](IncomingSubscribeCache &cache,
+				ref_<const SubscribeResponseMessage> message) {
+			messages.push_back(message->get_value().value.to_string());
+			cout << "Model Name: " <<
+				message->get_value().value.to_string() << "\n";
+		});
+		WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+		WAIT(2000);
+		subs_cache11->close();
+		WAIT(1000);
+
+		messages.clear();
+	}
+	catch (int e)
+	{
+		cout << "An exception occurred. Exception Nr. " << e << '\n';
+	}
+	try{
+		auto subs_cache12 = link->subscribe(
+			"main/cpu_frequency", [&](IncomingSubscribeCache &cache,
+				ref_<const SubscribeResponseMessage> message) {
+			messages.push_back(message->get_value().value.to_string());
+			cout << "CPU Frequency: " << message->get_value().value.to_string()
+				<< "\n";
+		});
+		WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
+		WAIT(2000);
+		subs_cache12->close();
+		WAIT(1000);
+
+		messages.clear();
+	}
+	catch (int e)
+	{
+		cout << "An exception occurred. Exception Nr. " << e << '\n';
+	}
 
   auto first_request = make_ref_<InvokeRequestMessage>();
   first_request->set_target_path("main/execute_stream_command");
@@ -174,6 +309,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
 
   WAIT(5000);
   invoke_stream->close();
+
   WAIT_EXPECT_TRUE(2000, [&]() -> bool { return invoke_stream->is_closed(); });
   WAIT(4000);
 

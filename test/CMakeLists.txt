@@ -72,6 +72,9 @@ add_executable(${TARGET_NAME} system_test.cc
 ../src/process/process_handler.cc)
 target_link_libraries(${TARGET_NAME} ${TEST_LIBS})
 target_link_libraries(${TARGET_NAME} Threads::Threads)
+if (WIN32)
+target_link_libraries(${TARGET_NAME} pdh)
+endif ()
 add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})
 
 #add_dependencies(${TARGET_NAME} hello_mock_link)
