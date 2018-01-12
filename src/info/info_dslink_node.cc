@@ -78,6 +78,9 @@ void InfoDsLinkNodeArchitecture::update_value() {
 void InfoDsLinkNodeProcessorCount::update_value() {
   set_value(Var(info::cpu::get_cpu_quantities().physical));
 };
+void InfoDsLinkNodeProcessorVendor::update_value() {
+	set_value(Var(info::cpu::get_vendor()));
+};
 
 InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
                                ref_<info::ProcessHandler> &&process)
@@ -174,6 +177,12 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
       make_ref_<InfoDsLinkNodeProcessorCount>(_strand->get_ref()));
   nodes["processor_count"]->update_property("$name", Var("Processor Count"));
   nodes["processor_count"]->update_property("$type", Var("string"));
+
+  nodes["vendor"] = add_list_child(
+	  "vendor",
+	  make_ref_<InfoDsLinkNodeProcessorVendor>(_strand->get_ref()));
+  nodes["vendor"]->update_property("$name", Var("Processor Vendor"));
+  nodes["vendor"]->update_property("$type", Var("string"));
 
   ref_<NodeModel> exe_cmd_node = add_list_child(
       "execute_command",

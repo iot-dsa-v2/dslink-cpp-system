@@ -13,7 +13,6 @@ ProcessHandler::ProcessHandler(fs::path executable_path, string_ arguments,
   this->arguments = arguments;
   this->log_path = log_path;
   this->app = app;
-  // this->env = boost::this_process::environment();
 
   if (this->app == nullptr)
     this->app = make_shared_<App>();

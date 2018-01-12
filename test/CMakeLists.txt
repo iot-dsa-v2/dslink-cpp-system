@@ -73,7 +73,7 @@ add_executable(${TARGET_NAME} system_test.cc
 target_link_libraries(${TARGET_NAME} ${TEST_LIBS})
 target_link_libraries(${TARGET_NAME} Threads::Threads)
 if (WIN32)
-target_link_libraries(${TARGET_NAME} pdh)
+target_link_libraries(${TARGET_NAME} pdh Wbemuuid)
 endif ()
 add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})
 

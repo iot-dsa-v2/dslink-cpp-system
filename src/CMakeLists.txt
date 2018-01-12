@@ -45,7 +45,7 @@ target_link_libraries(system_dslink Threads::Threads)
 target_link_libraries(system_dslink ${Boost_LIBRARIES})
 target_link_libraries(system_dslink ${OPENSSL_LIBRARIES})
 if (WIN32)
-target_link_libraries(system_dslink pdh)
+target_link_libraries(system_dslink pdh Wbemuuid)
 endif ()
 
 add_dependencies(system_dslink broker)

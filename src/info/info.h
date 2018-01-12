@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <functional>
 //#include "boost/filesystem.hpp"
 
 namespace info {

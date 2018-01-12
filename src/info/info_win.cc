@@ -16,9 +16,12 @@
 #include <thread>
 #include <bitset>
 #include <Pdh.h>
+#include <functional>
+#include <VersionHelpers.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <wbemidl.h>
 
 
 std::string info::cpu::get_architecture() {
@@ -67,17 +70,16 @@ static std::vector<SYSTEM_LOGICAL_PROCESSOR_INFORMATION> cpuinfo_buffer() {
 std::string info::cpu::get_frequency() {
   LARGE_INTEGER freq;
   QueryPerformanceFrequency(&freq);
-  return std::to_string(static_cast<int64_t>(freq.QuadPart / 1000));
+  return std::to_string(static_cast<int64_t>(freq.QuadPart / 1000)) + " MHz";
 }
 
 info::cpu::quantities_t info::cpu::get_cpu_quantities() {
-	int removelater = 0;
+	int physical_cpu_count = 0;
   info::cpu::quantities_t ret{};
   	for(auto&& info : cpuinfo_buffer())
 		switch(info.Relationship) {
 			case RelationProcessorCore:
-				//++ret.physical;
-				++removelater;
+				++physical_cpu_count;
 				// A hyperthreaded core supplies more than one logical processor.
 				ret.logical += static_cast<std::uint32_t>(std::bitset<sizeof(ULONG_PTR) * 8>(info.ProcessorMask).count());
 				break;
@@ -90,7 +92,7 @@ info::cpu::quantities_t info::cpu::get_cpu_quantities() {
 			default:
 				break;
 		}
-
+	ret.physical = std::to_string(physical_cpu_count);
   return ret;
 }
 std::string info::cpu::get_product_name() {
@@ -135,38 +137,117 @@ info::system::diskspace_t info::system::get_diskspace_info() {
 	return ret;
 }
 
+template <unsigned int IdentLen>
+static std::string central_processor_subkey(const char* key) {
+	HKEY hkey;
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, R"(HARDWARE\DESCRIPTION\System\CentralProcessor\0)", 0, KEY_READ, &hkey))
+		return {};
+
+	char identifier[IdentLen];
+	DWORD identifier_len = sizeof identifier;
+	LPBYTE lpdata = static_cast<LPBYTE>(static_cast<void*>(&identifier[0]));
+	if (RegQueryValueExA(hkey, key, nullptr, nullptr, lpdata, &identifier_len))
+		return {};
+
+	return identifier;
+}
+
 std::string info::cpu::get_vendor() {
-  return cpuinfo_value("vendor");
+	//TODO retrieve vendor information from system
+	return central_processor_subkey<13>("VendorIdentifier");
 }
 
 std::string info::cpu::get_model_name() {
-  return cpuinfo_value("model name");
+	// Get extended ids.
+	int CPUInfo[4] = { -1 };
+	__cpuid(CPUInfo, 0x80000000);
+	unsigned int nExIds = CPUInfo[0];
+
+	// Get the information associated with each extended ID.
+	char CPUBrandString[0x40] = { 0 };
+	for (unsigned int i = 0x80000000; i <= nExIds; ++i)
+	{
+		__cpuid(CPUInfo, i);
+
+		// Interpret CPU brand string and cache information.
+		if (i == 0x80000002)
+		{
+			memcpy(CPUBrandString,
+				CPUInfo,
+				sizeof(CPUInfo));
+		}
+		else if (i == 0x80000003)
+		{
+			memcpy(CPUBrandString + 16,
+				CPUInfo,
+				sizeof(CPUInfo));
+		}
+		else if (i == 0x80000004)
+		{
+			memcpy(CPUBrandString + 32, CPUInfo, sizeof(CPUInfo));
+		}
+	}
+	return CPUBrandString;
+}
+
+BOOL EqualsMajorVersion(DWORD majorVersion)
+{
+	OSVERSIONINFOEX osVersionInfo;
+	::ZeroMemory(&osVersionInfo, sizeof(OSVERSIONINFOEX));
+	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	osVersionInfo.dwMajorVersion = majorVersion;
+	ULONGLONG maskCondition = ::VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL);
+	return ::VerifyVersionInfo(&osVersionInfo, VER_MAJORVERSION, maskCondition);
+}
+BOOL EqualsMinorVersion(DWORD minorVersion)
+{
+	OSVERSIONINFOEX osVersionInfo;
+	::ZeroMemory(&osVersionInfo, sizeof(OSVERSIONINFOEX));
+	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	osVersionInfo.dwMinorVersion = minorVersion;
+	ULONGLONG maskCondition = ::VerSetConditionMask(0, VER_MINORVERSION, VER_EQUAL);
+	return ::VerifyVersionInfo(&osVersionInfo, VER_MINORVERSION, maskCondition);
 }
 
 info::system::OS_info_t info::system::get_OS_info() {
-  std::ifstream release("/etc/lsb-release");
 
-  if(!release.is_open() || !release)
-    return {};
+	const auto kernel_version = info::system::get_kernel_info();
+	std::string version = "";
+	if (IsWindows10OrGreater())
+		version = "Windows 10";
+	else if (IsWindows8Point1OrGreater())
+		version = "Windows 8.1";
+	else if (IsWindows8OrGreater())
+		version = "Windows 8";
+	else if (IsWindows7SP1OrGreater())
+		version = "Windows 7 SP1";
+	else if (IsWindows7OrGreater())
+		version = "Windows 7";
+	else if (IsWindowsVistaSP2OrGreater())
+		version = "Windows Vista SP2";
+	else if (IsWindowsVistaSP1OrGreater())
+		version = "Windows Vista SP1";
+	else if (IsWindowsVistaOrGreater())
+		version = "Windows Vista";
+	else if (IsWindowsXPSP3OrGreater())
+		version = "Windows XP SP3";
+	else if (IsWindowsXPSP2OrGreater())
+		version = "Windows XP SP2";
+	else if (IsWindowsXPSP1OrGreater())
+		version = "Windows XP SP1";
+	else if (IsWindowsXPOrGreater())
+		version = "Windows XP";
 
-  info::system::OS_info_t ret{};
+	//if (IsWindowsServer())
+	//{
+	//	printf("Server\n");
+	//}
+	//else
+	//{
+	//	printf("Client\n");
+	//}
 
-  for(std::string line; std::getline(release, line);)
-    if(line.find("DISTRIB_ID") == 0)
-      ret.name = line.substr(line.find('=') + 1);
-    else if(line.find("DISTRIB_RELEASE") == 0) {
-      char* marker     = &line[line.find('=') + 1];
-      ret.major        = std::strtoul(marker, &marker, 10);
-      ret.minor        = std::strtoul(marker + 1, &marker, 10);
-      ret.patch        = std::strtoul(marker + 1, &marker, 10);
-      ret.build_number = std::strtoul(marker + 1, nullptr, 10);
-    } else if(line.find("DISTRIB_DESCRIPTION") == 0) {
-      const auto start_idx = line.find('"') + 1;
-      const auto end_idx   = line.size() - 1;
-      ret.full_name        = line.substr(start_idx, end_idx - start_idx);
-    }
-
-  return ret;
+	return { "Windows NT", version, kernel_version.major, kernel_version.minor, kernel_version.patch, kernel_version.build_number };
 }
 
 info::system::kernel_info_t info::system::get_kernel_info() {
@@ -186,6 +267,7 @@ info::system::kernel_info_t info::system::get_kernel_info() {
 
   //return { "windows_nt", HIWORD(file_version->dwProductVersionMS), LOWORD(file_version->dwProductVersionMS),
 	 // HIWORD(file_version->dwProductVersionLS), LOWORD(file_version->dwProductVersionLS) };
+
 	DWORD dwVersion = 0;
 	DWORD dwMajorVersion = 0;
 	DWORD dwMinorVersion = 0;
@@ -258,8 +340,6 @@ std::vector<info::cpu::CPUData> info::cpu::ReadStatsCPU() {
         ss >> entry.times[i];
     }
   }
-
-
 
   return entries;
 }

@@ -143,6 +143,12 @@ public:
       : InfoDsLinkNodeBase(std::move(strand)){};
   void update_value() override;
 };
+class InfoDsLinkNodeProcessorVendor : public InfoDsLinkNodeBase {
+public:
+	explicit InfoDsLinkNodeProcessorVendor(LinkStrandRef &&strand)
+		: InfoDsLinkNodeBase(std::move(strand)) {};
+	void update_value() override;
+};
 
 class InfoDsLinkNode : public NodeModel {
   ref_<StrandTimer> _timer;
