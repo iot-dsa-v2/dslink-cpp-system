@@ -6,7 +6,16 @@ namespace dslink_info {
 InfoDsLinkNodeBase::InfoDsLinkNodeBase(LinkStrandRef &&strand)
     : NodeModel(std::move(strand)) {
   _subscribe_state = false;
+  _dynamic = true;
+  _is_updated = false;
 };
+
+void InfoDsLinkNodeBase::handle_value() {
+  if(_dynamic || (!_dynamic && !_is_updated)) {
+    update_value();
+    _is_updated = true;
+  }
+}
 
 void InfoDsLinkNodeBase::set_subs_callback(SubsCallback &&cb) {
   _subs_callback = std::move(cb);
@@ -266,7 +275,7 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
               bool any_subs = false;
               for (auto it = nodes.begin(); it != nodes.end(); ++it) {
                 if (it->second->get_subs_state()) {
-                  it->second->update_value();
+                  it->second->handle_value();
                   any_subs = true;
                 }
               }

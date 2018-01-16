@@ -27,12 +27,11 @@ void connect_dslink(int argc, char const *argv[], std::shared_ptr<App> app) {
 
 	system_main->init_responder(std::move(_info_node));
 
-	static_cast<ConsoleLogger &>(system_main->strand->logger()).filter =
-		Logger::WARN__ | Logger::ERROR_ | Logger::FATAL_;
+//	static_cast<ConsoleLogger &>(system_main->strand->logger()).filter =
+//		Logger::WARN__ | Logger::ERROR_ | Logger::FATAL_;
 
 	system_main->connect(
 		[&](const shared_ptr_<Connection> connection) {
-		std::cout << "sdfsldjfksdfksd\n";
 		LOG_DEBUG(system_main->strand->logger(), LOG << "system-dslink is connected");
 	});
 

@@ -22,6 +22,10 @@ namespace dslink_info {
 class InfoDsLinkNodeBase : public NodeModel {
   bool _subscribe_state;
 
+ protected:
+  bool _dynamic = true;
+  bool _is_updated = false;
+
 public:
   typedef std::function<void(void)> SubsCallback;
   SubsCallback _subs_callback;
@@ -39,6 +43,7 @@ public:
   bool get_subs_state() { return _subscribe_state; }
 
   virtual void update_value() {}
+  void handle_value();
 };
 
 class InfoDsLinkNodeCPUUsage : public InfoDsLinkNodeBase {
@@ -92,13 +97,13 @@ public:
 class InfoDsLinkNodeHardwareModel : public InfoDsLinkNodeBase {
 public:
   explicit InfoDsLinkNodeHardwareModel(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
+      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
   void update_value() override;
 };
 class InfoDsLinkNodeModelName : public InfoDsLinkNodeBase {
 public:
   explicit InfoDsLinkNodeModelName(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
+      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
   void update_value() override;
 };
 class InfoDsLinkNodeCPUFreq : public InfoDsLinkNodeBase {
@@ -116,13 +121,13 @@ public:
 class InfoDsLinkNodeOperatingSystem : public InfoDsLinkNodeBase {
 public:
   explicit InfoDsLinkNodeOperatingSystem(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
+      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
   void update_value() override;
 };
 class InfoDsLinkNodePlatform : public InfoDsLinkNodeBase {
 public:
   explicit InfoDsLinkNodePlatform(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
+      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
   void update_value() override;
 };
 class InfoDsLinkNodeHostname : public InfoDsLinkNodeBase {
@@ -134,19 +139,19 @@ public:
 class InfoDsLinkNodeArchitecture : public InfoDsLinkNodeBase {
 public:
   explicit InfoDsLinkNodeArchitecture(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
+      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
   void update_value() override;
 };
 class InfoDsLinkNodeProcessorCount : public InfoDsLinkNodeBase {
 public:
   explicit InfoDsLinkNodeProcessorCount(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
+      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
   void update_value() override;
 };
 class InfoDsLinkNodeProcessorVendor : public InfoDsLinkNodeBase {
 public:
 	explicit InfoDsLinkNodeProcessorVendor(LinkStrandRef &&strand)
-		: InfoDsLinkNodeBase(std::move(strand)) {};
+		: InfoDsLinkNodeBase(std::move(strand)) { _dynamic = false; };
 	void update_value() override;
 };
 

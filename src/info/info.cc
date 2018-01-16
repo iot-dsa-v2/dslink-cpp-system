@@ -22,17 +22,6 @@ std::string info::cpu::get_architecture() {
     return "Unknown";
   else
     return buf.machine;
-
-//  if(!strcmp(buf.machine, "x86_64"))
-//    return "x86_64";
-//  else if(strstr(buf.machine, "arm") == buf.machine)
-//    return "arm";
-//  else if(!strcmp(buf.machine, "ia64") || !strcmp(buf.machine, "IA64"))
-//    return "IA64";
-//  else if(!strcmp(buf.machine, "i686"))
-//    return "i686";
-//  else
-//    return "Unknown";
 }
 
 
@@ -148,10 +137,10 @@ info::system::kernel_info_t info::system::get_kernel_info() {
   uname(&uts);
 
   char* marker                    = uts.release;
-  const unsigned int major        = std::strtoul(marker, &marker, 10);
-  const unsigned int minor        = std::strtoul(marker + 1, &marker, 10);
-  const unsigned int patch        = std::strtoul(marker + 1, &marker, 10);
-  const unsigned int build_number = std::strtoul(marker + 1, nullptr, 10);
+  const unsigned long int major        = std::strtoul(marker, &marker, 10);
+  const unsigned long int minor        = std::strtoul(marker + 1, &marker, 10);
+  const unsigned long int patch        = std::strtoul(marker + 1, &marker, 10);
+  const unsigned long int build_number = std::strtoul(marker + 1, nullptr, 10);
 
   std::string kernel = "Unknown";
   if(!std::strcmp(uts.sysname, "Linux"))

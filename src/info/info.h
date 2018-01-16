@@ -190,19 +190,19 @@ enum class kernel_t {
 
 struct kernel_info_t {
   std::string variant;
-  std::uint32_t major;
-  std::uint32_t minor;
-  std::uint32_t patch;
-  std::uint32_t build_number;
+  std::uint64_t major;
+  std::uint64_t minor;
+  std::uint64_t patch;
+  std::uint64_t build_number;
 };
 
 struct OS_info_t {
   std::string name;
   std::string full_name;
-  unsigned int major;
-  unsigned int minor;
-  unsigned int patch;
-  unsigned int build_number;
+  std::uint64_t major;
+  std::uint64_t minor;
+  std::uint64_t patch;
+  std::uint64_t build_number;
 };
 
 struct display_t {
