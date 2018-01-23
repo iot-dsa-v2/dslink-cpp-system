@@ -43,7 +43,7 @@ add_library(system_dslink_lib ${SOURCES})
 target_link_libraries(system_dslink dsa_sdk)
 target_link_libraries(system_dslink Threads::Threads)
 target_link_libraries(system_dslink ${Boost_LIBRARIES})
-target_link_libraries(system_dslink crypto)
+target_link_libraries(system_dslink  ${OPENSSL_LIBRARIES})
 
 add_dependencies(system_dslink broker)
 

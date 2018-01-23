@@ -1,3 +1,4 @@
+#include "dsa_common.h"
 #include "process_handler.h"
 #include "boost/asio/strand.hpp"
 #include "module/logger.h"
