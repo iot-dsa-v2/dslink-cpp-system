@@ -56,10 +56,10 @@ TEST(SystemLinkTest, SSubscribeTest) {
 
   std::vector<std::string> messages;
   auto subs_cache = link->subscribe(
-      "main/cpu_usage", [&](IncomingSubscribeCache &cache,
+      "main/process_count", [&](IncomingSubscribeCache &cache,
                             ref_<const SubscribeResponseMessage> message) {
         messages.push_back(message->get_value().value.get_string());
-        cout << "CPU Usage: " << message->get_value().value.get_string()
+        cout << "Process Count: " << message->get_value().value.get_string()
              << "\n";
       });
   WAIT_EXPECT_TRUE(2000, [&]() { return messages.size() > 0; });
