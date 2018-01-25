@@ -46,113 +46,15 @@ public:
   void handle_value();
 };
 
-class InfoDsLinkNodeCPUUsage : public InfoDsLinkNodeBase {
+template <class T> class InfoDsLinkNodeTemplate : public InfoDsLinkNodeBase {
+  T _f_ptr;
+
 public:
-  explicit InfoDsLinkNodeCPUUsage(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeFreeMemory : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeFreeMemory(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeUsedMemory : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeUsedMemory(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeTotalMemory : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeTotalMemory(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeDiskUsage : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeDiskUsage(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeFreeDiskSpace : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeFreeDiskSpace(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeUsedDiskSpace : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeUsedDiskSpace(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeTotalDiskSpace : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeTotalDiskSpace(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeHardwareModel : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeHardwareModel(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
-  void update_value() override;
-};
-class InfoDsLinkNodeModelName : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeModelName(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
-  void update_value() override;
-};
-class InfoDsLinkNodeCPUFreq : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeCPUFreq(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeSystemTime : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeSystemTime(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeOperatingSystem : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeOperatingSystem(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
-  void update_value() override;
-};
-class InfoDsLinkNodePlatform : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodePlatform(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
-  void update_value() override;
-};
-class InfoDsLinkNodeHostname : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeHostname(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){};
-  void update_value() override;
-};
-class InfoDsLinkNodeArchitecture : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeArchitecture(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
-  void update_value() override;
-};
-class InfoDsLinkNodeProcessorCount : public InfoDsLinkNodeBase {
-public:
-  explicit InfoDsLinkNodeProcessorCount(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)){ _dynamic = false; };
-  void update_value() override;
-};
-class InfoDsLinkNodeProcessorVendor : public InfoDsLinkNodeBase {
-public:
-	explicit InfoDsLinkNodeProcessorVendor(LinkStrandRef &&strand)
-		: InfoDsLinkNodeBase(std::move(strand)) { _dynamic = false; };
-	void update_value() override;
+  explicit InfoDsLinkNodeTemplate(LinkStrandRef &&strand, T f_ptr)
+      : InfoDsLinkNodeBase(std::move(strand)) {
+    _f_ptr = f_ptr;
+  }
+  void update_value() override { set_value(Var((_f_ptr)())); };
 };
 
 class InfoDsLinkNode : public NodeModel {

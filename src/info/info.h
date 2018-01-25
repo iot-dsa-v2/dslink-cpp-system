@@ -4,7 +4,7 @@
 
 #pragma once
 
-
+#include <boost/filesystem.hpp>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -98,14 +98,12 @@ struct cache_t {
   cache_type_t type;
 };
 
-typedef struct CPUData
-{
+typedef struct CPUData {
   std::string cpu;
   size_t times[10];
 } CPUData;
 
-enum CPUStates
-{
+enum CPUStates {
   S_USER = 0,
   S_NICE,
   S_SYSTEM,
@@ -118,9 +116,9 @@ enum CPUStates
   S_GUEST_NICE
 };
 
-size_t GetActiveTime(const CPUData & e);
+size_t GetActiveTime(const CPUData &e);
 
-size_t GetIdleTime(const CPUData & e);
+size_t GetIdleTime(const CPUData &e);
 
 std::vector<info::cpu::CPUData> ReadStatsCPU();
 
@@ -129,6 +127,10 @@ std::string get_cpu_usage();
 
 /// Returns the quantity of CPU at various gradation.
 quantities_t get_cpu_quantities();
+
+std::string get_cpu_cores();
+
+std::string get_cpu_temp();
 
 /// Get CPU's cache properties.
 ///
@@ -167,6 +169,7 @@ std::vector<instruction_set_t> supported_instruction_sets();
 
 namespace system {
 struct memory_t {
+  std::string _physical_usage;
   std::string _physical_used;
   std::string _physical_available;
   std::string _physical_free;
@@ -229,8 +232,25 @@ std::size_t other_HID_amount();
 /// Get RAM statistics.
 memory_t get_memory_info();
 
+/// Get total RAM statistics.
+std::string get_memory_usage();
+
+std::string get_total_memory();
+
+std::string get_used_memory();
+
+std::string get_free_memory();
+
 /// Get Disk statistics.
 diskspace_t get_diskspace_info();
+
+std::string get_disk_usage();
+
+std::string get_total_disk_space();
+
+std::string get_used_disk_space();
+
+std::string get_free_disk_space();
 
 /// Get System Time
 std::string get_system_time();
@@ -241,12 +261,20 @@ std::string get_hostname();
 /// Get kernel information.
 kernel_info_t get_kernel_info();
 
+std::string get_kernel_variant();
+
 /// Get kernel information.
 OS_info_t get_OS_info();
+
+std::string get_os_full_name();
+
+std::string get_open_files();
+
+std::string get_process_count();
 
 /// Get information about displays.
 std::vector<display_t> displays();
 }
 }
 
-#endif //PROJECT_INFO_H
+#endif // PROJECT_INFO_H

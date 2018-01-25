@@ -20,176 +20,162 @@ void InfoDsLinkNodeBase::handle_value() {
 void InfoDsLinkNodeBase::set_subs_callback(SubsCallback &&cb) {
   _subs_callback = std::move(cb);
 }
-void InfoDsLinkNodeCPUUsage::update_value() {
-  set_value(Var(info::cpu::get_cpu_usage()));
-}
-
-void InfoDsLinkNodeFreeMemory::update_value() {
-  set_value(Var(info::system::get_memory_info()._physical_free));
-};
-
-void InfoDsLinkNodeUsedMemory::update_value() {
-  set_value(Var(info::system::get_memory_info()._physical_used));
-};
-
-void InfoDsLinkNodeTotalMemory::update_value() {
-  set_value(Var(info::system::get_memory_info()._physical_total));
-};
-
-void InfoDsLinkNodeDiskUsage::update_value() {
-  set_value(Var(info::system::get_diskspace_info()._disk_usage));
-};
-
-void InfoDsLinkNodeFreeDiskSpace::update_value() {
-  set_value(Var(info::system::get_diskspace_info()._diskspace_free));
-};
-
-void InfoDsLinkNodeUsedDiskSpace::update_value() {
-  set_value(Var(info::system::get_diskspace_info()._diskspace_used));
-};
-
-void InfoDsLinkNodeTotalDiskSpace::update_value() {
-  set_value(Var(info::system::get_diskspace_info()._diskspace_total));
-};
-
-void InfoDsLinkNodeHardwareModel::update_value() {
-  set_value(Var(info::cpu::get_product_name()));
-};
-
-void InfoDsLinkNodeModelName::update_value() {
-  set_value(Var(info::cpu::get_model_name()));
-};
-
-void InfoDsLinkNodeCPUFreq::update_value() {
-  set_value(Var(info::cpu::get_frequency()));
-};
-
-void InfoDsLinkNodeSystemTime::update_value() {
-  set_value(Var(info::system::get_system_time()));
-};
-
-void InfoDsLinkNodeOperatingSystem::update_value() {
-  set_value(Var(info::system::get_OS_info().full_name));
-};
-
-void InfoDsLinkNodePlatform::update_value() {
-  set_value(Var(info::system::get_kernel_info().variant));
-};
-
-void InfoDsLinkNodeHostname::update_value() {
-  set_value(Var(info::system::get_hostname()));
-};
-
-void InfoDsLinkNodeArchitecture::update_value() {
-  set_value(Var(info::cpu::get_architecture()));
-};
-
-void InfoDsLinkNodeProcessorCount::update_value() {
-  set_value(Var(info::cpu::get_cpu_quantities().physical));
-};
-void InfoDsLinkNodeProcessorVendor::update_value() {
-	set_value(Var(info::cpu::get_vendor()));
-};
 
 InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
                                ref_<info::ProcessHandler> &&process)
     : NodeModel(std::move(strand)) {
 
   nodes["cpu_usage"] = add_list_child(
-      "cpu_usage", make_ref_<InfoDsLinkNodeCPUUsage>(_strand->get_ref()));
+      "cpu_usage",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::cpu::get_cpu_usage));
   nodes["cpu_usage"]->update_property("$name", Var("CPU Usage"));
   nodes["cpu_usage"]->update_property("$type", Var("string"));
 
+  nodes["memory_usage"] = add_list_child(
+      "memory_usage",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_memory_usage));
+  nodes["memory_usage"]->update_property("$name", Var("Memory Usage"));
+  nodes["memory_usage"]->update_property("$type", Var("string"));
+
   nodes["free_memory"] = add_list_child(
-      "free_memory", make_ref_<InfoDsLinkNodeFreeMemory>(_strand->get_ref()));
+      "free_memory",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_free_memory));
   nodes["free_memory"]->update_property("$name", Var("Free Memory"));
   nodes["free_memory"]->update_property("$type", Var("string"));
 
   nodes["used_memory"] = add_list_child(
-      "used_memory", make_ref_<InfoDsLinkNodeUsedMemory>(_strand->get_ref()));
+      "used_memory",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_used_memory));
   nodes["used_memory"]->update_property("$name", Var("Used Memory"));
   nodes["used_memory"]->update_property("$type", Var("string"));
 
   nodes["total_memory"] = add_list_child(
-      "total_memory", make_ref_<InfoDsLinkNodeTotalMemory>(_strand->get_ref()));
+      "total_memory",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_total_memory));
   nodes["total_memory"]->update_property("$name", Var("Total Memory"));
   nodes["total_memory"]->update_property("$type", Var("string"));
 
   nodes["disk_usage"] = add_list_child(
-      "disk_usage", make_ref_<InfoDsLinkNodeDiskUsage>(_strand->get_ref()));
+      "disk_usage",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_disk_usage));
   nodes["disk_usage"]->update_property("$name", Var("Disk Usage"));
   nodes["disk_usage"]->update_property("$type", Var("string"));
 
   nodes["free_disk_space"] = add_list_child(
       "free_disk_space",
-      make_ref_<InfoDsLinkNodeFreeDiskSpace>(_strand->get_ref()));
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_free_disk_space));
   nodes["free_disk_space"]->update_property("$name", Var("Free Disk Space"));
   nodes["free_disk_space"]->update_property("$type", Var("string"));
 
   nodes["used_disk_space"] = add_list_child(
       "used_disk_space",
-      make_ref_<InfoDsLinkNodeUsedDiskSpace>(_strand->get_ref()));
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_used_disk_space));
   nodes["used_disk_space"]->update_property("$name", Var("Used Disk Space"));
   nodes["used_disk_space"]->update_property("$type", Var("string"));
 
   nodes["total_disk_space"] = add_list_child(
       "total_disk_space",
-      make_ref_<InfoDsLinkNodeTotalDiskSpace>(_strand->get_ref()));
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_total_disk_space));
   nodes["total_disk_space"]->update_property("$name", Var("Total Disk Space"));
   nodes["total_disk_space"]->update_property("$type", Var("string"));
 
   nodes["hardware_model"] = add_list_child(
       "hardware_model",
-      make_ref_<InfoDsLinkNodeHardwareModel>(_strand->get_ref()));
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::cpu::get_product_name));
   nodes["hardware_model"]->update_property("$name", Var("Hardware Model"));
   nodes["hardware_model"]->update_property("$type", Var("string"));
 
   nodes["model_name"] = add_list_child(
-      "model_name", make_ref_<InfoDsLinkNodeModelName>(_strand->get_ref()));
+      "model_name",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::cpu::get_model_name));
   nodes["model_name"]->update_property("$name", Var("Model Name"));
   nodes["model_name"]->update_property("$type", Var("string"));
 
   nodes["cpu_frequency"] = add_list_child(
-      "cpu_frequency", make_ref_<InfoDsLinkNodeCPUFreq>(_strand->get_ref()));
+      "cpu_frequency",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::cpu::get_frequency));
   nodes["cpu_frequency"]->update_property("$name", Var("CPU Frequency"));
   nodes["cpu_frequency"]->update_property("$type", Var("string"));
 
   nodes["system_time"] = add_list_child(
-      "system_time", make_ref_<InfoDsLinkNodeSystemTime>(_strand->get_ref()));
+      "system_time",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_system_time));
   nodes["system_time"]->update_property("$name", Var("System Time"));
   nodes["system_time"]->update_property("$type", Var("string"));
 
   nodes["operating_system"] = add_list_child(
       "operating_system",
-      make_ref_<InfoDsLinkNodeOperatingSystem>(_strand->get_ref()));
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_os_full_name));
   nodes["operating_system"]->update_property("$name", Var("Operating System"));
   nodes["operating_system"]->update_property("$type", Var("string"));
 
   nodes["platform"] = add_list_child(
-      "platform", make_ref_<InfoDsLinkNodePlatform>(_strand->get_ref()));
+      "platform",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_kernel_variant));
   nodes["platform"]->update_property("$name", Var("Platform Info"));
   nodes["platform"]->update_property("$type", Var("string"));
 
   nodes["hostname"] = add_list_child(
-      "hostname", make_ref_<InfoDsLinkNodeHostname>(_strand->get_ref()));
+      "hostname",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_hostname));
   nodes["hostname"]->update_property("$name", Var("Hostname"));
   nodes["hostname"]->update_property("$type", Var("string"));
 
-  nodes["architecture"] =
-      add_list_child("architecture",
-                     make_ref_<InfoDsLinkNodeArchitecture>(_strand->get_ref()));
+  nodes["open_files"] = add_list_child(
+      "open_files",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_open_files));
+  nodes["open_files"]->update_property("$name", Var("Open Files"));
+  nodes["open_files"]->update_property("$type", Var("string"));
+
+  nodes["process_count"] = add_list_child(
+      "process_count",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::system::get_process_count));
+  nodes["process_count"]->update_property("$name", Var("Process Count"));
+  nodes["process_count"]->update_property("$type", Var("string"));
+
+  nodes["architecture"] = add_list_child(
+      "architecture",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::cpu::get_architecture));
   nodes["architecture"]->update_property("$name", Var("Architecture"));
   nodes["architecture"]->update_property("$type", Var("string"));
 
   nodes["processor_count"] = add_list_child(
       "processor_count",
-      make_ref_<InfoDsLinkNodeProcessorCount>(_strand->get_ref()));
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::cpu::get_cpu_cores));
   nodes["processor_count"]->update_property("$name", Var("Processor Count"));
   nodes["processor_count"]->update_property("$type", Var("string"));
 
+  nodes["processor_temp"] = add_list_child(
+      "processor_temp",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::cpu::get_cpu_temp));
+  nodes["processor_temp"]->update_property("$name", Var("Processor Temp"));
+  nodes["processor_temp"]->update_property("$type", Var("string"));
+
   nodes["vendor"] = add_list_child(
-	  "vendor",
-	  make_ref_<InfoDsLinkNodeProcessorVendor>(_strand->get_ref()));
+      "vendor",
+      make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
+          _strand->get_ref(), info::cpu::get_vendor));
   nodes["vendor"]->update_property("$name", Var("Processor Vendor"));
   nodes["vendor"]->update_property("$type", Var("string"));
 
