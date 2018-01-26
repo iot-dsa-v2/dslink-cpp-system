@@ -137,12 +137,14 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
   nodes["hostname"]->update_property("$name", Var("Hostname"));
   nodes["hostname"]->update_property("$type", Var("string"));
 
+#if !defined(WIN32)
   nodes["open_files"] = add_list_child(
       "open_files",
       make_ref_<InfoDsLinkNodeTemplate<std::function<std::string(void)>>>(
           _strand->get_ref(), info::system::get_open_files));
   nodes["open_files"]->update_property("$name", Var("Open Files"));
   nodes["open_files"]->update_property("$type", Var("string"));
+#endif
 
   nodes["process_count"] = add_list_child(
       "process_count",

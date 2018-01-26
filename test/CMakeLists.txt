@@ -65,7 +65,7 @@ set(TARGET_NAME "test-system-dslink")
 #add_subdirectory("mock_dslink_processes")
 
 add_executable(${TARGET_NAME} system_test.cc 
-"../deps/sdk-dslink-cpp/test/sdk/async_test.cc" 
+../deps/sdk-dslink-cpp/test/sdk/async_test.cc 
 ../src/info/info.cc 
 ../src/info/info_win.cc 
 ../src/info/info_dslink_node.cc 
