@@ -272,6 +272,8 @@ std::string get_open_files();
 
 std::string get_process_count();
 
+std::string get_network_interfaces();
+
 /// Get information about displays.
 std::vector<display_t> displays();
 }

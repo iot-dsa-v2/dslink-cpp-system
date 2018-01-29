@@ -11,7 +11,7 @@ InfoDsLinkNodeBase::InfoDsLinkNodeBase(LinkStrandRef &&strand)
 };
 
 void InfoDsLinkNodeBase::handle_value() {
-  if(_dynamic || (!_dynamic && !_is_updated)) {
+  if (_dynamic || (!_dynamic && !_is_updated)) {
     update_value();
     _is_updated = true;
   }
@@ -19,6 +19,115 @@ void InfoDsLinkNodeBase::handle_value() {
 
 void InfoDsLinkNodeBase::set_subs_callback(SubsCallback &&cb) {
   _subs_callback = std::move(cb);
+}
+
+InfoDsLinkNodeNetwork::InfoDsLinkNodeNetwork(LinkStrandRef &&strand)
+    : NodeModel(std::move(strand)) {
+  _subscribe_state = false;
+  _dynamic = true;
+  _is_updated = false;
+};
+
+void InfoDsLinkNodeNetwork::handle_value() {
+  if (_dynamic || (!_dynamic && !_is_updated)) {
+    update_value();
+    _is_updated = true;
+  }
+}
+
+void InfoDsLinkNodeNetwork::set_subs_callback(SubsCallback &&cb) {
+  _subs_callback = std::move(cb);
+}
+
+void InfoDsLinkNodeNetwork::on_subscribe(const SubscribeOptions &options,
+                                         bool first_request) {
+  if (_subs_callback)
+    _subs_callback();
+  _subscribe_state = true;
+
+  update_value();
+
+  set_value(Var(""));
+}
+
+void InfoDsLinkNodeNetwork::update_value(){
+  struct ifaddrs *ifaddr, *ifa;
+  int family, s, n;
+  char host[NI_MAXHOST];
+  std::map<std::string, std::string> interfaces;
+
+  if (getifaddrs(&ifaddr) == -1) {
+    perror("getifaddrs");
+    exit(EXIT_FAILURE);
+  }
+
+  // TODO: remove disconnected interfaces from list_child
+  interfaces.clear();
+
+  /* Walk through linked list, maintaining head pointer so we
+     can free list later */
+
+  for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+
+    family = ifa->ifa_addr->sa_family;
+
+    if (family == AF_INET || family == AF_INET6) {
+
+      s = getnameinfo(ifa->ifa_addr,
+                      (family == AF_INET) ? sizeof(struct sockaddr_in)
+                                          : sizeof(struct sockaddr_in6),
+                      host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+      if (s != 0) {
+        printf("getnameinfo() failed: %s\n", gai_strerror(s));
+        exit(EXIT_FAILURE);
+      }
+
+      interfaces[ifa->ifa_name] += host;
+      interfaces[ifa->ifa_name] += " ";
+    }
+  }
+
+  for (std::map<std::string, std::string>::iterator it = interfaces.begin();
+       it != interfaces.end(); ++it) {
+    std::cout << it->first << " :: " << it->second << std::endl;
+
+    if (network_nodes.find(it->first) == network_nodes.end()) {
+      network_nodes[it->first] = add_list_child(
+          it->first,
+          make_ref_<InfoDsLinkNodeNetworkInterfaces>(_strand->get_ref()));
+
+      network_nodes[it->first]->set_subs_callback([&]() {
+        //      _timer->restart(1000);
+
+        if (network_timer.get() == nullptr ||
+            (network_timer.get() != nullptr && !network_timer->is_running())) {
+          if (network_timer.get() != nullptr)
+            network_timer->destroy();
+          network_timer = _strand->add_timer(
+              1000, [&, keep_ref = get_ref() ](bool canceled) {
+
+                bool any_subs = false;
+                for (auto it1 = network_nodes.begin();
+                     it1 != network_nodes.end(); ++it1) {
+                  if (network_nodes[it1->first]->get_subs_state()) {
+                    network_nodes[it1->first]->update_value();
+                    any_subs = true;
+                  }
+                }
+
+                return any_subs;
+              });
+        } else {
+          // timer already running
+        }
+        return true;
+      });
+    }
+    network_nodes[it->first]->set_interface_value(it->second);
+  }
+
+  freeifaddrs(ifaddr);
+
 }
 
 InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
@@ -181,6 +290,41 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
   nodes["vendor"]->update_property("$name", Var("Processor Vendor"));
   nodes["vendor"]->update_property("$type", Var("string"));
 
+  //TODO: do we need attr for set?
+  ref_<InfoDsLinkNodePollRate> poll_rate = add_list_child(
+      "poll_rate",
+      make_ref_<InfoDsLinkNodePollRate>(
+          _strand->get_ref(), [&]() {
+            //TODO: make it thread-safe, post in timer's strand
+            _timer->repeat_interval_ms = poll_rate->get_value();
+          }));
+
+  ref_<InfoDsLinkNodeNetwork> network_interfaces = add_list_child("network_interfaces",
+                 make_ref_<InfoDsLinkNodeNetwork>(_strand->get_ref()));
+
+  network_interfaces->set_subs_callback([&]() {
+    //      _timer->restart(1000);
+
+    if (_timer.get() == nullptr ||
+        (_timer.get() != nullptr && !_timer->is_running())) {
+      if (_timer.get() != nullptr)
+        _timer->destroy();
+      _timer = _strand->add_timer(
+          1000, [ &, keep_ref = get_ref() ](bool canceled) {
+
+            bool any_subs = false;
+            network_interfaces->handle_value();
+            any_subs = true;
+
+            return any_subs;
+          });
+    } else {
+      // timer already running
+    }
+    return true;
+  });
+
+
   ref_<NodeModel> exe_cmd_node = add_list_child(
       "execute_command",
       make_ref_<SimpleInvokeNode>(
@@ -238,6 +382,7 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
               process->terminate();
               _command_timer->destroy();
             }
+            return true;
           },
           PermissionLevel::CONFIG));
   exe_stream_cmd_node->update_property("$name", Var("Execute command stream"));
@@ -258,7 +403,7 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
         if (_timer.get() != nullptr)
           _timer->destroy();
         _timer = _strand->add_timer(
-            1000, [ this, keep_ref = get_ref() ](bool canceled) {
+            poll_rate->get_value(), [ this, keep_ref = get_ref() ](bool canceled) {
 
               bool any_subs = false;
               for (auto it = nodes.begin(); it != nodes.end(); ++it) {
@@ -273,6 +418,7 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
       } else {
         // timer already running
       }
+      return true;
     });
   }
 }
