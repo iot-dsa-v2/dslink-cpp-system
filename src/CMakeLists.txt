@@ -47,6 +47,9 @@ target_link_libraries(system_dslink ${OPENSSL_LIBRARIES})
 if (WIN32)
 target_link_libraries(system_dslink pdh Wbemuuid)
 endif ()
+if (UNIX)
+	target_link_libraries(system_dslink dl)
+endif ()
 
 add_dependencies(system_dslink broker)
 
