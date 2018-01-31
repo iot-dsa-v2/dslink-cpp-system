@@ -11,7 +11,6 @@
 
 #include "process/process_handler.h"
 
-#include <ifaddrs.h>
 #include <iostream>
 
 using namespace std;
@@ -58,9 +57,38 @@ public:
   void update_value() override { set_value(Var((_f_ptr)())); };
 };
 
+class InfoDsLinkNodePollRate : public NodeModel {
+public:
+	typedef std::function<void(void)> SetCallback;
+	SetCallback _set_callback;
+	explicit InfoDsLinkNodePollRate(
+		LinkStrandRef strand,
+		SetCallback &&set_callback) // allows set value with write permission
+		: NodeModel(std::move(strand), PermissionLevel::WRITE) {
+		update_property("$name", Var("Poll Rate"));
+		update_property("$type", Var("int"));
+		set_value(Var(1));
+		_set_callback = std::move(set_callback);
+	};
+
+	MessageStatus on_set_attribute(const string_ &field, Var &&value) override {
+		update_property(field, std::move(value));
+		return MessageStatus::CLOSED;
+	}
+
+	int get_value() { return (int)get_cached_value().value.get_int() * 1000; }
+	MessageStatus on_set_value(MessageValue &&value) override {
+		set_value(std::move(value));
+		if (_set_callback != nullptr)
+			_set_callback();
+		return MessageStatus::CLOSED;
+	}
+};
+
 class InfoDsLinkNode : public NodeModel {
   ref_<StrandTimer> _timer;
   ref_<StrandTimer> _command_timer;
+  ref_<InfoDsLinkNodePollRate> poll_rate;
 
 public:
   std::map<string, ref_<InfoDsLinkNodeBase>> nodes;
@@ -103,34 +131,6 @@ public:
 
   virtual void update_value();
   void handle_value();
-};
-
-class InfoDsLinkNodePollRate : public NodeModel {
-public:
-  typedef std::function<void(void)> SetCallback;
-  SetCallback _set_callback;
-  explicit InfoDsLinkNodePollRate(
-      LinkStrandRef strand,
-      SetCallback &&set_callback) // allows set value with write permission
-      : NodeModel(std::move(strand), PermissionLevel::WRITE) {
-    update_property("$name", Var("Poll Rate"));
-    update_property("$type", Var("int"));
-    set_value(Var(1));
-    _set_callback = std::move(set_callback);
-  };
-
-  MessageStatus on_set_attribute(const string_ &field, Var &&value) override {
-    update_property(field, std::move(value));
-    return MessageStatus::CLOSED;
-  }
-
-  int get_value() { return (int)get_cached_value().value.get_int() * 1000; }
-  MessageStatus on_set_value(MessageValue &&value) override {
-    set_value(std::move(value));
-    if (_set_callback != nullptr)
-      _set_callback();
-    return MessageStatus::CLOSED;
-  }
 };
 }
 #endif // PROJECT_INFO_DSLINK_NODE_H

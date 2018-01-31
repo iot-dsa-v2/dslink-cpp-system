@@ -21,6 +21,7 @@
 #include <thread>
 #include <unistd.h>
 #include <vector>
+#include <ifaddrs.h>
 
 std::string info::cpu::get_architecture() {
   utsname buf;
@@ -436,7 +437,6 @@ std::map<std::string, std::string> info::system::get_network_interfaces() {
     exit(EXIT_FAILURE);
   }
 
-  // TODO: remove disconnected interfaces from list_child
   interfaces.clear();
 
   /* Walk through linked list, maintaining head pointer so we

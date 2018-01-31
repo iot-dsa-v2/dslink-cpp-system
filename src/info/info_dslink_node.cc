@@ -262,7 +262,7 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
   nodes["vendor"]->update_property("$type", Var("string"));
 
   // TODO: do we need attr for set?
-  ref_<InfoDsLinkNodePollRate> poll_rate = add_list_child(
+  poll_rate = add_list_child(
       "poll_rate", make_ref_<InfoDsLinkNodePollRate>(_strand->get_ref(), [&]() {
         // TODO: make it thread-safe, post in timer's strand
         _timer->repeat_interval_ms = poll_rate->get_value();

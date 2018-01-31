@@ -626,4 +626,20 @@ std::string info::cpu::get_cpu_temp() {
 
   return "0.0°C";
 }
+
+std::map<std::string, std::string> info::system::get_network_interfaces() {
+	struct ifaddrs *ifaddr, *ifa;
+	int family, s, n;
+	char host[NI_MAXHOST];
+	std::map<std::string, std::string> interfaces;
+
+	// TODO: remove disconnected interfaces from list_child
+	interfaces.clear();
+
+	for (std::map<std::string, std::string>::iterator it = interfaces.begin();
+		it != interfaces.end(); ++it) {
+		std::cout << it->first << " :: " << it->second << std::endl;
+	}
+	return (interfaces);
+}
 #endif
