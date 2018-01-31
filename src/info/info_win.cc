@@ -28,6 +28,17 @@ typedef SSIZE_T ssize_t;
 #include <wbemidl.h>
 #include <windows.h>
 
+#include <winsock2.h>
+#include <ws2ipdef.h>
+#include <iphlpapi.h>
+#include <stdio.h>
+#include <string>
+
+#pragma comment(lib, "iphlpapi.lib")
+
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+
 using namespace std;
 
 std::string info::cpu::get_architecture() {
@@ -628,18 +639,43 @@ std::string info::cpu::get_cpu_temp() {
 }
 
 std::map<std::string, std::string> info::system::get_network_interfaces() {
-	struct ifaddrs *ifaddr, *ifa;
-	int family, s, n;
-	char host[NI_MAXHOST];
 	std::map<std::string, std::string> interfaces;
 
-	// TODO: remove disconnected interfaces from list_child
-	interfaces.clear();
+	PIP_ADAPTER_INFO pAdapterInfo;
+	PIP_ADAPTER_INFO pAdapter = NULL;
+	DWORD dwRetVal = 0;
 
-	for (std::map<std::string, std::string>::iterator it = interfaces.begin();
-		it != interfaces.end(); ++it) {
-		std::cout << it->first << " :: " << it->second << std::endl;
+	ULONG ulOutBufLen = sizeof(IP_ADAPTER_INFO);
+	pAdapterInfo = (IP_ADAPTER_INFO *)MALLOC(sizeof(IP_ADAPTER_INFO));
+	if (pAdapterInfo == NULL) {
+		printf("Error allocating memory needed to call GetAdaptersinfo\n");
 	}
+
+	if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) {
+		FREE(pAdapterInfo);
+		pAdapterInfo = (IP_ADAPTER_INFO *)MALLOC(ulOutBufLen);
+		if (pAdapterInfo == NULL) {
+			printf("Error allocating memory needed to call GetAdaptersinfo\n");
+		}
+	}
+
+	if ((dwRetVal = GetAdaptersInfo(pAdapterInfo, &ulOutBufLen)) == NO_ERROR) {
+		pAdapter = pAdapterInfo;
+		while (pAdapter) {
+
+			interfaces[to_string(pAdapter->Index)] = string(pAdapter->Description) + ":" + string(pAdapter->IpAddressList.IpAddress.String);
+
+			pAdapter = pAdapter->Next;
+			printf("\n");
+		}
+	}
+	else {
+		printf("GetAdaptersInfo failed with error: %d\n", dwRetVal);
+
+	}
+	if (pAdapterInfo)
+		FREE(pAdapterInfo);
+
 	return (interfaces);
 }
 #endif

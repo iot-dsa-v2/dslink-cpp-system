@@ -268,7 +268,7 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
         _timer->repeat_interval_ms = poll_rate->get_value();
       }));
 
-  ref_<InfoDsLinkNodeNetwork> network_interfaces =
+  network_interfaces =
       add_list_child("network_interfaces",
                      make_ref_<InfoDsLinkNodeNetwork>(_strand->get_ref()));
 

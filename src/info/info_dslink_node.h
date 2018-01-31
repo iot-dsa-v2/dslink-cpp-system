@@ -85,10 +85,48 @@ public:
 	}
 };
 
+class InfoDsLinkNodeNetworkInterfaces : public InfoDsLinkNodeBase {
+	std::string _interface;
+
+public:
+	explicit InfoDsLinkNodeNetworkInterfaces(LinkStrandRef &&strand)
+		: InfoDsLinkNodeBase(std::move(strand)) {}
+	void update_value() override { set_value(Var(_interface)); };
+	void set_interface_value(std::string interface) { _interface = interface; };
+};
+
+class InfoDsLinkNodeNetwork : public NodeModel {
+	bool _subscribe_state;
+	ref_<StrandTimer> network_timer;
+	bool _first_call = true;
+	std::map<std::string, std::string> interfaces;
+
+protected:
+	bool _dynamic = true;
+	bool _is_updated = false;
+
+public:
+	std::map<string, ref_<InfoDsLinkNodeNetworkInterfaces>> network_nodes;
+	typedef std::function<void(void)> SubsCallback;
+	SubsCallback _subs_callback;
+	void set_subs_callback(SubsCallback &&cb);
+	explicit InfoDsLinkNodeNetwork(LinkStrandRef &&strand);
+
+	void on_subscribe(const SubscribeOptions &options,
+		bool first_request) override;
+
+	void on_unsubscribe() override { _subscribe_state = false; }
+	bool get_subs_state() { return _subscribe_state; }
+
+	virtual void update_value();
+	void handle_value();
+};
+
 class InfoDsLinkNode : public NodeModel {
   ref_<StrandTimer> _timer;
   ref_<StrandTimer> _command_timer;
   ref_<InfoDsLinkNodePollRate> poll_rate;
+  ref_<InfoDsLinkNodeNetwork> network_interfaces;
 
 public:
   std::map<string, ref_<InfoDsLinkNodeBase>> nodes;
@@ -96,41 +134,5 @@ public:
                           ref_<info::ProcessHandler> &&process);
 };
 
-class InfoDsLinkNodeNetworkInterfaces : public InfoDsLinkNodeBase {
-  std::string _interface;
-
-public:
-  explicit InfoDsLinkNodeNetworkInterfaces(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)) {}
-  void update_value() override { set_value(Var(_interface)); };
-  void set_interface_value(std::string interface) { _interface = interface; };
-};
-
-class InfoDsLinkNodeNetwork : public NodeModel {
-  bool _subscribe_state;
-  ref_<StrandTimer> network_timer;
-  bool _first_call = true;
-  std::map<std::string, std::string> interfaces;
-
-protected:
-  bool _dynamic = true;
-  bool _is_updated = false;
-
-public:
-  std::map<string, ref_<InfoDsLinkNodeNetworkInterfaces>> network_nodes;
-  typedef std::function<void(void)> SubsCallback;
-  SubsCallback _subs_callback;
-  void set_subs_callback(SubsCallback &&cb);
-  explicit InfoDsLinkNodeNetwork(LinkStrandRef &&strand);
-
-  void on_subscribe(const SubscribeOptions &options,
-                    bool first_request) override;
-
-  void on_unsubscribe() override { _subscribe_state = false; }
-  bool get_subs_state() { return _subscribe_state; }
-
-  virtual void update_value();
-  void handle_value();
-};
 }
 #endif // PROJECT_INFO_DSLINK_NODE_H
