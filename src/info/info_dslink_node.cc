@@ -50,8 +50,9 @@ void InfoDsLinkNodeNetwork::on_subscribe(const SubscribeOptions &options,
   set_value(Var(""));
 }
 
-void InfoDsLinkNodeNetwork::update_value(){
-  std::map<std::string, std::string> interfaces = info::system::get_network_interfaces();
+void InfoDsLinkNodeNetwork::update_value() {
+  std::map<std::string, std::string> interfaces =
+      info::system::get_network_interfaces();
 
   for (std::map<std::string, std::string>::iterator it = interfaces.begin();
        it != interfaces.end(); ++it) {
@@ -83,21 +84,21 @@ void InfoDsLinkNodeNetwork::update_value(){
                 return any_subs;
               });
         } else {
-          }
+        }
         return true;
       });
     }
     network_nodes[it->first]->set_interface_value(it->second);
   }
 
-  for (std::map<string, ref_<InfoDsLinkNodeNetworkInterfaces>>::iterator it = network_nodes.begin();
+  for (std::map<string, ref_<InfoDsLinkNodeNetworkInterfaces>>::iterator it =
+           network_nodes.begin();
        it != network_nodes.end(); ++it) {
     if (interfaces.find(it->first) == interfaces.end()) {
       remove_list_child(it->first);
       network_nodes.erase(it->first);
     }
   };
-
 }
 
 InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
@@ -260,17 +261,16 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
   nodes["vendor"]->update_property("$name", Var("Processor Vendor"));
   nodes["vendor"]->update_property("$type", Var("string"));
 
-  //TODO: do we need attr for set?
+  // TODO: do we need attr for set?
   ref_<InfoDsLinkNodePollRate> poll_rate = add_list_child(
-      "poll_rate",
-      make_ref_<InfoDsLinkNodePollRate>(
-          _strand->get_ref(), [&]() {
-            //TODO: make it thread-safe, post in timer's strand
-            _timer->repeat_interval_ms = poll_rate->get_value();
-          }));
+      "poll_rate", make_ref_<InfoDsLinkNodePollRate>(_strand->get_ref(), [&]() {
+        // TODO: make it thread-safe, post in timer's strand
+        _timer->repeat_interval_ms = poll_rate->get_value();
+      }));
 
-  ref_<InfoDsLinkNodeNetwork> network_interfaces = add_list_child("network_interfaces",
-                 make_ref_<InfoDsLinkNodeNetwork>(_strand->get_ref()));
+  ref_<InfoDsLinkNodeNetwork> network_interfaces =
+      add_list_child("network_interfaces",
+                     make_ref_<InfoDsLinkNodeNetwork>(_strand->get_ref()));
 
   network_interfaces->set_subs_callback([&]() {
     //      _timer->restart(1000);
@@ -279,8 +279,8 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
         (_timer.get() != nullptr && !_timer->is_running())) {
       if (_timer.get() != nullptr)
         _timer->destroy();
-      _timer = _strand->add_timer(
-          1000, [ &, keep_ref = get_ref() ](bool canceled) {
+      _timer =
+          _strand->add_timer(1000, [&, keep_ref = get_ref() ](bool canceled) {
 
             bool any_subs = false;
             network_interfaces->handle_value();
@@ -293,7 +293,6 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
     }
     return true;
   });
-
 
   ref_<NodeModel> exe_cmd_node = add_list_child(
       "execute_command",
@@ -373,7 +372,8 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
         if (_timer.get() != nullptr)
           _timer->destroy();
         _timer = _strand->add_timer(
-            poll_rate->get_value(), [ this, keep_ref = get_ref() ](bool canceled) {
+            poll_rate->get_value(),
+            [ this, keep_ref = get_ref() ](bool canceled) {
 
               bool any_subs = false;
               for (auto it = nodes.begin(); it != nodes.end(); ++it) {

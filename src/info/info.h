@@ -6,15 +6,15 @@
 
 #include <boost/filesystem.hpp>
 #include <cstdint>
-#include <string>
-#include <vector>
 #include <functional>
 #include <map>
+#include <string>
+#include <vector>
 //#include "boost/filesystem.hpp"
 
 namespace info {
 namespace cpu {
-//enum class architecture_t {
+// enum class architecture_t {
 //  x64,
 //  arm,
 //  itanium,
@@ -273,7 +273,7 @@ std::string get_open_files();
 
 std::string get_process_count();
 
-std::map<std::string,std::string> get_network_interfaces();
+std::map<std::string, std::string> get_network_interfaces();
 
 /// Get information about displays.
 std::vector<display_t> displays();

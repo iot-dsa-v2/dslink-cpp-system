@@ -11,8 +11,8 @@
 
 #include "process/process_handler.h"
 
-#include <iostream>
 #include <ifaddrs.h>
+#include <iostream>
 
 using namespace std;
 
@@ -23,7 +23,7 @@ namespace dslink_info {
 class InfoDsLinkNodeBase : public NodeModel {
   bool _subscribe_state;
 
- protected:
+protected:
   bool _dynamic = true;
   bool _is_updated = false;
 
@@ -70,12 +70,12 @@ public:
 
 class InfoDsLinkNodeNetworkInterfaces : public InfoDsLinkNodeBase {
   std::string _interface;
- public:
+
+public:
   explicit InfoDsLinkNodeNetworkInterfaces(LinkStrandRef &&strand)
-      : InfoDsLinkNodeBase(std::move(strand)) {
-  }
-  void update_value() override { set_value(Var(_interface));};
-  void set_interface_value(std::string interface) {_interface = interface;};
+      : InfoDsLinkNodeBase(std::move(strand)) {}
+  void update_value() override { set_value(Var(_interface)); };
+  void set_interface_value(std::string interface) { _interface = interface; };
 };
 
 class InfoDsLinkNodeNetwork : public NodeModel {
@@ -84,11 +84,11 @@ class InfoDsLinkNodeNetwork : public NodeModel {
   bool _first_call = true;
   std::map<std::string, std::string> interfaces;
 
- protected:
+protected:
   bool _dynamic = true;
   bool _is_updated = false;
 
- public:
+public:
   std::map<string, ref_<InfoDsLinkNodeNetworkInterfaces>> network_nodes;
   typedef std::function<void(void)> SubsCallback;
   SubsCallback _subs_callback;
@@ -106,11 +106,12 @@ class InfoDsLinkNodeNetwork : public NodeModel {
 };
 
 class InfoDsLinkNodePollRate : public NodeModel {
- public:
+public:
   typedef std::function<void(void)> SetCallback;
   SetCallback _set_callback;
   explicit InfoDsLinkNodePollRate(
-      LinkStrandRef strand, SetCallback &&set_callback)  // allows set value with write permission
+      LinkStrandRef strand,
+      SetCallback &&set_callback) // allows set value with write permission
       : NodeModel(std::move(strand), PermissionLevel::WRITE) {
     update_property("$name", Var("Poll Rate"));
     update_property("$type", Var("int"));
@@ -123,16 +124,13 @@ class InfoDsLinkNodePollRate : public NodeModel {
     return MessageStatus::CLOSED;
   }
 
-  int get_value(){
-    return (int)get_cached_value().value.get_int()*1000;
-  }
+  int get_value() { return (int)get_cached_value().value.get_int() * 1000; }
   MessageStatus on_set_value(MessageValue &&value) override {
     set_value(std::move(value));
-    if(_set_callback != nullptr)
+    if (_set_callback != nullptr)
       _set_callback();
     return MessageStatus::CLOSED;
   }
 };
-
 }
 #endif // PROJECT_INFO_DSLINK_NODE_H

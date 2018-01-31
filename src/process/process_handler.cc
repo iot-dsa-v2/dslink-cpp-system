@@ -1,8 +1,8 @@
-#include "dsa_common.h"
 #include "process_handler.h"
-#include "boost/asio/strand.hpp"
+#include "dsa_common.h"
 #include "module/logger.h"
 #include "process_handler.h"
+#include <boost/asio/strand.hpp>
 #include <boost/asio/buffers_iterator.hpp>
 
 using namespace dsa;
@@ -53,7 +53,7 @@ bool ProcessHandler::running() { return this->process.running(); }
 std::string ProcessHandler::getOutput() {
   using boost::asio::buffers_begin;
 
-  if(output.size() == 0)
+  if (output.size() == 0)
     return "";
   auto bufs = output.data();
   std::string result(buffers_begin(bufs), buffers_begin(bufs) + output.size());
@@ -64,8 +64,8 @@ std::string ProcessHandler::getOutput() {
 void ProcessHandler::terminate() {
   this->process.terminate();
   this->process.wait();
-// TODO: make os independent
-  //kill(this->process.id(), SIGKILL);
+  // TODO: make os independent
+  // kill(this->process.id(), SIGKILL);
 }
 
 void ProcessHandler::schedule_terminate(int seconds) {

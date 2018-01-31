@@ -1,26 +1,26 @@
 #ifdef __linux__
 #include "info.h"
 #include <algorithm>
+#include <arpa/inet.h>
 #include <boost/filesystem.hpp>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <fstream>
+#include <ifaddrs.h>
+#include <iostream>
 #include <iterator>
+#include <linux/if_link.h>
+#include <map>
+#include <netdb.h>
 #include <sstream>
 #include <string>
+#include <sys/socket.h>
 #include <sys/utsname.h>
 #include <thread>
 #include <unistd.h>
 #include <vector>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <ifaddrs.h>
-#include <linux/if_link.h>
-#include <map>
-#include <iostream>
 
 std::string info::cpu::get_architecture() {
   utsname buf;
@@ -425,7 +425,7 @@ std::string info::cpu::get_cpu_temp() {
   return "0.0°C";
 }
 
-std::map<std::string,std::string> info::system::get_network_interfaces() {
+std::map<std::string, std::string> info::system::get_network_interfaces() {
   struct ifaddrs *ifaddr, *ifa;
   int family, s, n;
   char host[NI_MAXHOST];
@@ -462,12 +462,12 @@ std::map<std::string,std::string> info::system::get_network_interfaces() {
     }
   }
 
-  for (std::map<std::string,std::string>::iterator it=interfaces.begin(); it!=interfaces.end(); ++it)
-  {
-    std::cout<<it->first<<" :: "<<it->second<<std::endl;
+  for (std::map<std::string, std::string>::iterator it = interfaces.begin();
+       it != interfaces.end(); ++it) {
+    std::cout << it->first << " :: " << it->second << std::endl;
   }
 
   freeifaddrs(ifaddr);
-  return(interfaces);
+  return (interfaces);
 }
 #endif
