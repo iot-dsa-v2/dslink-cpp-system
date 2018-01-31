@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <map>
 //#include "boost/filesystem.hpp"
 
 namespace info {
@@ -272,7 +273,7 @@ std::string get_open_files();
 
 std::string get_process_count();
 
-std::string get_network_interfaces();
+std::map<std::string,std::string> get_network_interfaces();
 
 /// Get information about displays.
 std::vector<display_t> displays();

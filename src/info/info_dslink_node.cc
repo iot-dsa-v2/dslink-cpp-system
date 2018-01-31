@@ -41,9 +41,9 @@ void InfoDsLinkNodeNetwork::set_subs_callback(SubsCallback &&cb) {
 
 void InfoDsLinkNodeNetwork::on_subscribe(const SubscribeOptions &options,
                                          bool first_request) {
+  _subscribe_state = true;
   if (_subs_callback)
     _subs_callback();
-  _subscribe_state = true;
 
   update_value();
 
@@ -51,41 +51,7 @@ void InfoDsLinkNodeNetwork::on_subscribe(const SubscribeOptions &options,
 }
 
 void InfoDsLinkNodeNetwork::update_value(){
-  struct ifaddrs *ifaddr, *ifa;
-  int family, s, n;
-  char host[NI_MAXHOST];
-  std::map<std::string, std::string> interfaces;
-
-  if (getifaddrs(&ifaddr) == -1) {
-    perror("getifaddrs");
-    exit(EXIT_FAILURE);
-  }
-
-  // TODO: remove disconnected interfaces from list_child
-  interfaces.clear();
-
-  /* Walk through linked list, maintaining head pointer so we
-     can free list later */
-
-  for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
-
-    family = ifa->ifa_addr->sa_family;
-
-    if (family == AF_INET || family == AF_INET6) {
-
-      s = getnameinfo(ifa->ifa_addr,
-                      (family == AF_INET) ? sizeof(struct sockaddr_in)
-                                          : sizeof(struct sockaddr_in6),
-                      host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-      if (s != 0) {
-        printf("getnameinfo() failed: %s\n", gai_strerror(s));
-        exit(EXIT_FAILURE);
-      }
-
-      interfaces[ifa->ifa_name] += host;
-      interfaces[ifa->ifa_name] += " ";
-    }
-  }
+  std::map<std::string, std::string> interfaces = info::system::get_network_interfaces();
 
   for (std::map<std::string, std::string>::iterator it = interfaces.begin();
        it != interfaces.end(); ++it) {
@@ -114,19 +80,23 @@ void InfoDsLinkNodeNetwork::update_value(){
                     any_subs = true;
                   }
                 }
-
                 return any_subs;
               });
         } else {
-          // timer already running
-        }
+          }
         return true;
       });
     }
     network_nodes[it->first]->set_interface_value(it->second);
   }
 
-  freeifaddrs(ifaddr);
+  for (std::map<string, ref_<InfoDsLinkNodeNetworkInterfaces>>::iterator it = network_nodes.begin();
+       it != network_nodes.end(); ++it) {
+    if (interfaces.find(it->first) == interfaces.end()) {
+      remove_list_child(it->first);
+      network_nodes.erase(it->first);
+    }
+  };
 
 }
 

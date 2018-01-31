@@ -5,7 +5,7 @@
 #include "dslink.h"
 #include "util/app.h"
 
-#include <module/default/console_logger.h>
+#include "module/default/console_logger.h"
 
 #include "info/info_dslink_node.h"
 

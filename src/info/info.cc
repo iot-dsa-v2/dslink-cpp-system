@@ -425,7 +425,7 @@ std::string info::cpu::get_cpu_temp() {
   return "0.0°C";
 }
 
-std::string info::system::get_network_interfaces() {
+std::map<std::string,std::string> info::system::get_network_interfaces() {
   struct ifaddrs *ifaddr, *ifa;
   int family, s, n;
   char host[NI_MAXHOST];
@@ -436,22 +436,22 @@ std::string info::system::get_network_interfaces() {
     exit(EXIT_FAILURE);
   }
 
+  // TODO: remove disconnected interfaces from list_child
+  interfaces.clear();
+
   /* Walk through linked list, maintaining head pointer so we
      can free list later */
 
   for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
-//    if (ifa->ifa_addr == NULL)
-//      continue;
 
     family = ifa->ifa_addr->sa_family;
 
     if (family == AF_INET || family == AF_INET6) {
 
       s = getnameinfo(ifa->ifa_addr,
-                      (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                      sizeof(struct sockaddr_in6),
-                      host, NI_MAXHOST,
-                      NULL, 0, NI_NUMERICHOST);
+                      (family == AF_INET) ? sizeof(struct sockaddr_in)
+                                          : sizeof(struct sockaddr_in6),
+                      host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
       if (s != 0) {
         printf("getnameinfo() failed: %s\n", gai_strerror(s));
         exit(EXIT_FAILURE);
@@ -459,7 +459,6 @@ std::string info::system::get_network_interfaces() {
 
       interfaces[ifa->ifa_name] += host;
       interfaces[ifa->ifa_name] += " ";
-
     }
   }
 
@@ -469,6 +468,6 @@ std::string info::system::get_network_interfaces() {
   }
 
   freeifaddrs(ifaddr);
-  return("");
+  return(interfaces);
 }
 #endif
