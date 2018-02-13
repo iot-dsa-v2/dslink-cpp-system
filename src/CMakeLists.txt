@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.6.2)
 project(dslink-cpp-system)
 
-## OpenSSL v1.0.2l
+## OpenSSL v1.0.2n
 if (MACOSX)
-	set(OPENSSL_ROOT_DIR "/usr/local/Cellar/openssl/1.0.2l")
+	set(OPENSSL_ROOT_DIR "/usr/local/Cellar/openssl/1.0.2n")
+	set(OPENSSL_INCLUDE_DIR "/usr/local/Cellar/openssl/1.0.2n/include")
+	set(OPENSSL_LIBRARIES "/usr/local/Cellar/openssl/1.0.2n/lib")
 elseif (UNIX)
 	set(OPENSSL_ROOT_DIR "/usr/local/ssl")
 endif ()
@@ -29,7 +31,7 @@ find_package(Threads REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIR})
 
-set(SOURCES system_main.cc info/info_dslink_node.cc info/info.cc info/info_win.cc process/process_handler.cc)
+set(SOURCES system_main.cc info/info_dslink_node.cc info/info.cc info/info_mac.cc info/info_win.cc process/process_handler.cc)
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
 include_directories("./include")
@@ -45,11 +47,13 @@ target_link_libraries(system_dslink Threads::Threads)
 target_link_libraries(system_dslink ${Boost_LIBRARIES})
 target_link_libraries(system_dslink ${OPENSSL_LIBRARIES})
 if (WIN32)
-target_link_libraries(system_dslink pdh Wbemuuid)
+	target_link_libraries(system_dslink pdh Wbemuuid)
 endif ()
 if (UNIX)
 	target_link_libraries(system_dslink dl)
 endif ()
+if (MACOSX)
+	target_link_libraries(system_dslink dl)
+endif ()
 
 add_dependencies(system_dslink broker)
-

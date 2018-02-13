@@ -41,8 +41,18 @@ find_package(Boost 1.6 REQUIRED COMPONENTS system thread date_time filesystem pr
 include_directories(${Boost_INCLUDE_DIRS})
 set(TEST_LIBS ${TEST_LIBS} ${Boost_LIBRARIES})
 
+## OpenSSL v1.0.2n
+if (MACOSX)
+    set(OPENSSL_ROOT_DIR "/usr/local/Cellar/openssl/1.0.2n")
+    set(OPENSSL_INCLUDE_DIR "/usr/local/Cellar/openssl/1.0.2n/include")
+    set(OPENSSL_LIBRARIES "/usr/local/Cellar/openssl/1.0.2n/lib")
+elseif (UNIX)
+    set(OPENSSL_ROOT_DIR "/usr/local/ssl")
+endif ()
+
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
+
 set(TEST_LIBS ${TEST_LIBS} ${OPENSSL_LIBRARIES})
 
 include_directories("../deps/sdk-dslink-cpp/src/sdk")
@@ -54,7 +64,7 @@ include_directories(".")
 
 
 # TESTS
-if (UNIX)
+if (UNIX OR MACOSX)
     set(TEST_LIBS gtest_main dsa_sdk ${TEST_LIBS} dl)
 else ()
     set(TEST_LIBS gtest_main dsa_sdk ${TEST_LIBS})
@@ -64,11 +74,12 @@ set(TARGET_NAME "test-system-dslink")
 
 #add_subdirectory("mock_dslink_processes")
 
-add_executable(${TARGET_NAME} system_test.cc 
-../deps/sdk-dslink-cpp/test/sdk/async_test.cc 
+add_executable(${TARGET_NAME} system_test.cc
+../deps/sdk-dslink-cpp/test/sdk/async_test.cc
 ../src/info/info.cc 
-../src/info/info_win.cc 
-../src/info/info_dslink_node.cc 
+../src/info/info_win.cc
+../src/info/info_mac.cc
+../src/info/info_dslink_node.cc
 ../src/process/process_handler.cc)
 target_link_libraries(${TARGET_NAME} ${TEST_LIBS})
 target_link_libraries(${TARGET_NAME} Threads::Threads)

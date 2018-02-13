@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "dsa_common.h"
 #include <boost/filesystem.hpp>
 #include <cstdint>
 #include <functional>

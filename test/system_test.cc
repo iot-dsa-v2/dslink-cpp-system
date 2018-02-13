@@ -21,7 +21,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
   auto linkResp = make_ref_<DsLink>(argc, argv, "mydslink", "1.0.0", app);
 
   // filter log for unit test
-  static_cast<ConsoleLogger &>(linkResp->strand->logger()).filter =
+  static_cast<ConsoleLogger &>(Logger::_()).filter =
       Logger::FATAL_ | Logger::ERROR_ | Logger::WARN__;
 
   ref_<InfoDsLinkNode> _info_node = make_ref_<InfoDsLinkNode>(
@@ -39,7 +39,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
   auto link = make_ref_<DsLink>(argc2, argv2, "mydslink", "1.0.0", app);
 
   // filter log for unit test
-  static_cast<ConsoleLogger &>(link->strand->logger()).filter =
+  static_cast<ConsoleLogger &>(Logger::_()).filter =
       Logger::FATAL_ | Logger::ERROR_ | Logger::WARN__;
 
   // connection
