@@ -30,7 +30,7 @@ void connect_dslink(int argc, char const *argv[], std::shared_ptr<App> app) {
   //		Logger::WARN__ | Logger::ERROR_ | Logger::FATAL_;
 
   system_main->connect([&](const shared_ptr_<Connection> connection, ref_<DsLinkRequester> link_req) {
-    LOG_DEBUG(Logger::_(),
+    LOG_DEBUG(__FILENAME__,
               LOG << "system-dslink is connected");
   });
 }
