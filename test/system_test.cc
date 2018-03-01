@@ -67,7 +67,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
                 }
                 if (!subscribed_1) {
                     link_req->subscribe(
-                            "main/processor_temp", [&](IncomingSubscribeCache &cache,
+                            "Main/Processor_Temp", [&](IncomingSubscribeCache &cache,
                                                        ref_<const SubscribeResponseMessage> message) {
                                 messages.push_back(message->get_value().value.get_string());
                                 cout << "CPU Temp: " << message->get_value().value.get_string()
@@ -79,7 +79,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
                 }
                 if (!subscribed_2) {
                     link_req->subscribe(
-                            "main/cpu_frequency", [&](IncomingSubscribeCache &cache,
+                            "Main/Cpu_Frequency", [&](IncomingSubscribeCache &cache,
                                                       ref_<const SubscribeResponseMessage> message) {
                                 messages.push_back(message->get_value().value.get_string());
                                 cout << "CPU Frequency: " << message->get_value().value.get_string()
@@ -91,7 +91,7 @@ TEST(SystemLinkTest, SSubscribeTest) {
                 }
 
                 auto first_request = make_ref_<InvokeRequestMessage>();
-                first_request->set_target_path("main/execute_stream_command");
+                first_request->set_target_path("Main/Execute_Stream_Command");
                 first_request->set_value(Var{{"cmd", Var("ping google.com")}});
 
                 auto invoke_stream = link_req->invoke(
