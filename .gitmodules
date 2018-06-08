@@ -1,3 +1,4 @@
 [submodule "deps/sdk-dslink-cpp"]
 	path = deps/sdk-dslink-cpp
 	url = https://github.com/iot-dsa-v2/sdk-dslink-cpp.git
+	branch = develop

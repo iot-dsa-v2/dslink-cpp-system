@@ -59,67 +59,67 @@ public:
 
 class InfoDsLinkNodePollRate : public NodeModel {
 public:
-	typedef std::function<void(void)> SetCallback;
-	SetCallback _set_callback;
-	explicit InfoDsLinkNodePollRate(
-		LinkStrandRef strand,
-		SetCallback &&set_callback) // allows set value with write permission
-		: NodeModel(std::move(strand), PermissionLevel::WRITE) {
-		update_property("$name", Var("Poll Rate"));
-		update_property("$type", Var("int"));
-		set_value(Var(1));
-		_set_callback = std::move(set_callback);
-	};
+  typedef std::function<void(void)> SetCallback;
+  SetCallback _set_callback;
+  explicit InfoDsLinkNodePollRate(
+      LinkStrandRef strand,
+      SetCallback &&set_callback) // allows set value with write permission
+      : NodeModel(std::move(strand), PermissionLevel::WRITE) {
+    update_property("$name", Var("Poll Rate"));
+    update_property("$type", Var("int"));
+    set_value(Var(1));
+    _set_callback = std::move(set_callback);
+  };
 
-	MessageStatus on_set_attribute(const string_ &field, Var &&value) override {
-		update_property(field, std::move(value));
-		return MessageStatus::CLOSED;
-	}
+  StatusDetail on_set_attribute(const string_ &field, Var &&value) override {
+    update_property(field, std::move(value));
+    return Status::DONE;
+  }
 
-	int get_value() { return (int)get_cached_value().value.get_int() * 1000; }
-	MessageStatus on_set_value(MessageValue &&value) override {
-		set_value(std::move(value));
-		if (_set_callback != nullptr)
-			_set_callback();
-		return MessageStatus::CLOSED;
-	}
+  int get_value() { return (int)get_cached_value().value.get_int() * 1000; }
+  StatusDetail on_set_value(MessageValue &&value) override {
+    set_value(std::move(value));
+    if (_set_callback != nullptr)
+      _set_callback();
+    return Status::DONE;
+  }
 };
 
 class InfoDsLinkNodeNetworkInterfaces : public InfoDsLinkNodeBase {
-	std::string _interface;
+  std::string _interface;
 
 public:
-	explicit InfoDsLinkNodeNetworkInterfaces(LinkStrandRef &&strand)
-		: InfoDsLinkNodeBase(std::move(strand)) {}
-	void update_value() override { set_value(Var(_interface)); };
-	void set_interface_value(std::string interface) { _interface = interface; };
+  explicit InfoDsLinkNodeNetworkInterfaces(LinkStrandRef &&strand)
+      : InfoDsLinkNodeBase(std::move(strand)) {}
+  void update_value() override { set_value(Var(_interface)); };
+  void set_interface_value(std::string interface) { _interface = interface; };
 };
 
 class InfoDsLinkNodeNetwork : public NodeModel {
-	bool _subscribe_state;
-	ref_<StrandTimer> network_timer;
-	bool _first_call = true;
-	std::map<std::string, std::string> interfaces;
+  bool _subscribe_state;
+  ref_<StrandTimer> network_timer;
+  bool _first_call = true;
+  std::map<std::string, std::string> interfaces;
 
 protected:
-	bool _dynamic = true;
-	bool _is_updated = false;
+  bool _dynamic = true;
+  bool _is_updated = false;
 
 public:
-	std::map<string, ref_<InfoDsLinkNodeNetworkInterfaces>> network_nodes;
-	typedef std::function<void(void)> SubsCallback;
-	SubsCallback _subs_callback;
-	void set_subs_callback(SubsCallback &&cb);
-	explicit InfoDsLinkNodeNetwork(LinkStrandRef &&strand);
+  std::map<string, ref_<InfoDsLinkNodeNetworkInterfaces>> network_nodes;
+  typedef std::function<void(void)> SubsCallback;
+  SubsCallback _subs_callback;
+  void set_subs_callback(SubsCallback &&cb);
+  explicit InfoDsLinkNodeNetwork(LinkStrandRef &&strand);
 
-	void on_subscribe(const SubscribeOptions &options,
-		bool first_request) override;
+  void on_subscribe(const SubscribeOptions &options,
+                    bool first_request) override;
 
-	void on_unsubscribe() override { _subscribe_state = false; }
-	bool get_subs_state() { return _subscribe_state; }
+  void on_unsubscribe() override { _subscribe_state = false; }
+  bool get_subs_state() { return _subscribe_state; }
 
-	virtual void update_value();
-	void handle_value();
+  virtual void update_value();
+  void handle_value();
 };
 
 class InfoDsLinkNode : public NodeModel {
@@ -133,6 +133,5 @@ public:
   explicit InfoDsLinkNode(LinkStrandRef &&strand,
                           ref_<info::ProcessHandler> &&process);
 };
-
 }
 #endif // PROJECT_INFO_DSLINK_NODE_H

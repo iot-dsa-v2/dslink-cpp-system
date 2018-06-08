@@ -26,4 +26,4 @@ set(SOURCES system_main.cc)
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/deps/sdk-dslink-cpp")
 add_subdirectory("./src")
-add_subdirectory("test")
+# add_subdirectory("test")

@@ -322,7 +322,8 @@ InfoDsLinkNode::InfoDsLinkNode(LinkStrandRef &&strand,
       "execute_stream_command",
       make_ref_<SimpleInvokeNode>(
           _strand->get_ref(),
-          [=](Var &&v, SimpleInvokeNode &node, OutgoingInvokeStream &stream) {
+          [=](Var &&v, SimpleInvokeNode &node, OutgoingInvokeStream &stream,
+              ref_<NodeState> &&ref_ns) {
 
             if (v.is_map() && (v.get_map().find("cmd") != v.get_map().end())) {
               if (v["cmd"].get_type() == Var::STRING) {
