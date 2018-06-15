@@ -1,55 +1,21 @@
 cmake_minimum_required(VERSION 3.6.2)
 project(dslink-cpp-system)
 
-## OpenSSL v1.0.2l
-if (MACOSX)
-	set(OPENSSL_ROOT_DIR "/usr/local/Cellar/openssl/1.0.2l")
-elseif (UNIX)
-	set(OPENSSL_ROOT_DIR "/usr/local/ssl")
-endif ()
-find_package(OpenSSL REQUIRED)
-include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+# add sources
+set(SOURCES system_main.cc info/info_dslink_node.cc info/info.cc info/info_mac.cc info/info_win.cc process/process_handler.cc)
 
-set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
-set(DSA_SDK_SOURCE ${PROJECT_SOURCE_DIR}/../deps/sdk-dslink-cpp/src)
-set(DSA_SDK_INCLUDE ${PROJECT_SOURCE_DIR}/../deps/sdk-dslink-cpp/include)
-set(DSA_SDK_DEPS ${PROJECT_SOURCE_DIR}/../deps/sdk-dslink-cpp/deps)
+add_executable(${TARGET_NAME} ${SOURCES})
+add_library(system_dslink_lib ${SOURCES})
 
-include_directories(${PROJECT_INCLUDE_DIR})
-include_directories(${DSA_SDK_DEPS}/msgpack/include)
-include_directories(${DSA_SDK_DEPS}/jansson-build/include)
+foreach(TARGET_LINK_NAME ${TARGET_NAME} "system_dslink_lib")
+	target_link_libraries(${TARGET_LINK_NAME} ${DSA_SDK_LIBRARY})
+	target_link_libraries(${TARGET_LINK_NAME} ${Boost_LIBRARIES})
+	target_link_libraries(${TARGET_LINK_NAME} ${OPENSSL_LIBRARIES})
+	if (UNIX)
+		target_link_libraries(${TARGET_LINK_NAME} dl pthread)
+	endif ()
 
-## Boost Library v1.66
-find_package(Threads)
-set(EXTRA_LIBS ${EXTRA_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-find_package(Boost 1.66 REQUIRED COMPONENTS system thread date_time program_options filesystem)
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-
-find_package(Threads REQUIRED)
-
-include_directories(${Boost_INCLUDE_DIR})
-
-set(SOURCES system_main.cc info/info_dslink_node.cc info/info.cc info/info_win.cc process/process_handler.cc)
-
-include_directories("${CMAKE_SOURCE_DIR}/src")
-include_directories("./include")
-include_directories("${DSA_SDK_SOURCE}/sdk")
-include_directories("${DSA_SDK_INCLUDE}")
-
-add_executable(system_dslink ${SOURCES})
-#add_library(system_dslink_lib ${SOURCES})
-
-
-target_link_libraries(system_dslink dsa_sdk)
-target_link_libraries(system_dslink Threads::Threads)
-target_link_libraries(system_dslink ${Boost_LIBRARIES})
-target_link_libraries(system_dslink ${OPENSSL_LIBRARIES})
-if (WIN32)
-target_link_libraries(system_dslink pdh Wbemuuid)
-endif ()
-if (UNIX)
-	target_link_libraries(system_dslink dl)
-endif ()
-
-add_dependencies(system_dslink broker)
-
+	if (NOT PREBUILT_SDK_PATH)
+		add_dependencies(${TARGET_LINK_NAME} ${DSA_SDK_LIBRARY})
+	endif ()
+endforeach()

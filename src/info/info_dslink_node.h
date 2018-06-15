@@ -1,6 +1,7 @@
 #ifndef PROJECT_INFO_DSLINK_NODE_H
 #define PROJECT_INFO_DSLINK_NODE_H
 
+#include "dsa_common.h"
 #include "dsa/message.h"
 #include "dsa/network.h"
 #include "dsa/responder.h"
