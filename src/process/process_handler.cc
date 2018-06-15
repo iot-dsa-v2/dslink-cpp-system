@@ -2,8 +2,8 @@
 #include "dsa_common.h"
 #include "module/logger.h"
 #include "process_handler.h"
-#include <boost/asio/strand.hpp>
 #include <boost/asio/buffers_iterator.hpp>
+#include <boost/asio/strand.hpp>
 
 using namespace dsa;
 namespace info {
@@ -30,7 +30,7 @@ void ProcessHandler::wait(int seconds) {
 
 void ProcessHandler::start(string_ args) {
   if (running()) {
-    LOG_WARN(Logger::_(), LOG << "It is already running, ignoring start()...");
+    LOG_WARN(__FILENAME__, LOG << "It is already running, ignoring start()...");
     return;
   }
   // if(args != "") { this->arguments = args; }
@@ -70,7 +70,7 @@ void ProcessHandler::terminate() {
 
 void ProcessHandler::schedule_terminate(int seconds) {
   if (termination_timer != nullptr) {
-    LOG_WARN(Logger::_(),
+    LOG_WARN(__FILENAME__,
              LOG << "Only one termination can be scheculed! Ignoring..."
                  << exec_path);
   }
@@ -81,11 +81,11 @@ void ProcessHandler::schedule_terminate(int seconds) {
 
   termination_timer->async_wait([&](const boost::system::error_code &error) {
     if (this->running()) {
-      LOG_DEBUG(Logger::_(),
+      LOG_DEBUG(__FILENAME__,
                 LOG << "Process couldn't be closed cleanly: " << exec_path);
       this->terminate();
     } else {
-      LOG_DEBUG(Logger::_(), LOG << "Process closed CLEANLY: " << exec_path);
+      LOG_DEBUG(__FILENAME__, LOG << "Process closed CLEANLY: " << exec_path);
     }
   });
 }

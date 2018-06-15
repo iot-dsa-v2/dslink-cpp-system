@@ -29,9 +29,9 @@ void connect_dslink(int argc, char const *argv[], std::shared_ptr<App> app) {
   //	static_cast<ConsoleLogger &>(system_main->strand->logger()).filter =
   //		Logger::WARN__ | Logger::ERROR_ | Logger::FATAL_;
 
-  system_main->connect([&](const shared_ptr_<Connection> connection) {
-    LOG_DEBUG(system_main->strand->logger(),
-              LOG << "system-dslink is connected");
+  system_main->connect([&](const shared_ptr_<Connection> connection,
+                           ref_<DsLinkRequester> link_req) {
+    LOG_DEBUG(__FILENAME__, LOG << "system-dslink is connected");
   });
 }
 

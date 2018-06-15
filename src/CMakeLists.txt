@@ -51,5 +51,5 @@ if (UNIX)
 	target_link_libraries(system_dslink dl)
 endif ()
 
-add_dependencies(system_dslink broker)
+# add_dependencies(system_dslink broker)
 
